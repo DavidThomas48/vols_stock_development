@@ -41,7 +41,11 @@ class StockForm extends \fw\view\form\StdCRUDForm {
             array_column($this->parents, "Name")
         );
         $optn = [];
-        $formfields  = $this->component->buildinputrow("Name", 1, "", 'Name', '', 20, 64, true, '', '');
+        $formfields  = '<div class="vols-stockmaint-header vols-stockitem-header">';
+        $formfields .= '<span class="vols-stockmaint-icon">&#128230;</span>';
+        $formfields .= '<span class="vols-stockmaint-text">Manage stock items. Add, edit or delete items that can be tracked in inventory.</span>';
+        $formfields .= '</div>';
+        $formfields .= $this->component->buildinputrow("Name", 1, "", 'Name', '', 20, 64, true, '', '');
         $formfields .= $this->component->buildinputrow("Code", 2, "", 'Code', 'Short code for this item', 20, 20, true, '', '');
         $formfields .= $this->component->buildselectrow("category_id", 3, 1, 'Category', $categorydata, "", $optn, false, false, true, false, '', false);
         $this->preparecommontop(false, false, '', $this->stockid);

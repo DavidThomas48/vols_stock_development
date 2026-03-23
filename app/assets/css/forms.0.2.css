@@ -1621,3 +1621,42 @@ input
 .vols-movement-fields {
     padding: 0.5rem 0;
 }
+
+/* ============================================================
+   Stock maintenance pages: category and stock item
+   ============================================================ */
+
+.vols-stockmaint-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: 4px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Category header — neutral blue tones */
+.vols-stockcategory-header {
+    background-color: #e8f0fb;
+    border-left: 4px solid #4a72c4;
+    color: #2a4a8a;
+}
+
+/* Stock item header — teal/blue tones */
+.vols-stockitem-header {
+    background-color: #e4f4f8;
+    border-left: 4px solid #2a8aac;
+    color: #1a5a74;
+}
+
+.vols-stockmaint-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vols-stockmaint-text {
+    flex: 1;
+}

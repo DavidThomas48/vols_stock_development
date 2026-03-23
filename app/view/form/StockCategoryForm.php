@@ -34,7 +34,11 @@ class StockCategoryForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function buildinputs($rights=[], $trace=false) {
-        $formfields = $this->component->buildinputrow("Name", 1, "", 'Name', '', 20, 64, true, '', '');
+        $formfields  = '<div class="vols-stockmaint-header vols-stockcategory-header">';
+        $formfields .= '<span class="vols-stockmaint-icon">&#9776;</span>';
+        $formfields .= '<span class="vols-stockmaint-text">Manage stock categories. Add, edit or delete categories used to group stock items.</span>';
+        $formfields .= '</div>';
+        $formfields .= $this->component->buildinputrow("Name", 1, "", 'Name', '', 20, 64, true, '', '');
         $this->preparecommontop(false, false, '', $this->categoryid);
         return $formfields;
     }
