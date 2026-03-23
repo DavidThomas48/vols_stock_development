@@ -2,7 +2,7 @@
 STOCK TRACKING SYSTEM — DEVELOPMENT REPORT
 Project: Woodend Neighbourhood House Food Bank Volunteer Rostering
 Date:    2026-03-23
-Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy)
+Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time)
 ================================================================================
 
 
@@ -104,7 +104,7 @@ Form Classes (app/view/form/)
                                 current qty shown green (positive) or red
                                 (zero/negative); no action buttons;
                                 "Export CSV" button downloads all 9 columns
-                                as stock-levels-YYYY-MM-DD.csv
+                                as stock-levels-yyyymmdd-hhmm.csv
   - DamagedStockForm.php      : Same as StockoutForm; dark red/burgundy
                                 banner header with warning triangle icon;
                                 hidden field value='damaged'
@@ -366,6 +366,8 @@ GIT COMMITS
   724cf3f  Fix CSV export column headings: remove leading +/-/= to prevent Excel formula errors
   d76e14a  Update development report: CSV export feature and Excel formula bug fix
   f7b69b1  Format stocktake dates as dd-mm-yyyy on report page and CSV export
+  76c181c  Update development report: dd-mm-yyyy date format change
+  3092bad  Include time in CSV export filename: stock-levels-yyyymmdd-hhmm.csv
 
 
 ================================================================================
