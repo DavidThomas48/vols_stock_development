@@ -2,7 +2,7 @@
 STOCK TRACKING SYSTEM — DEVELOPMENT REPORT
 Project: Woodend Neighbourhood House Food Bank Volunteer Rostering
 Date:    2026-03-23
-Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time)
+Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time; usage report)
 ================================================================================
 
 
@@ -14,7 +14,7 @@ stock lifecycle: setting up categories and items, recording stocktakes, logging
 deliveries (stock in), recording stock usage (stock out), recording damaged or
 spoiled stock, and viewing current stock levels with a full calculation breakdown.
 
-Eight new pages were added to the application under a new "Stock" menu group.
+Nine new pages were added to the application under a new "Stock" menu group.
 
 
 --------------------------------------------------------------------------------
@@ -81,6 +81,10 @@ Manager Classes (app/controller/manager/)
                                    getstockwithlevels() for the report page
   - DamagedStockManager.php      : Same as StockoutManager but records
                                    movement_type='damaged'
+  - StockUsageReportManager.php  : Date-range report manager; accepts from/to
+                                   dates via setdaterange(); calls
+                                   getusagereport() on StockMovementTable;
+                                   returns empty dataset when no dates set
 
 Form Classes (app/view/form/)
   - StockCategoryForm.php     : Standard CRUD form; blue banner header;
@@ -108,6 +112,14 @@ Form Classes (app/view/form/)
   - DamagedStockForm.php      : Same as StockoutForm; dark red/burgundy
                                 banner header with warning triangle icon;
                                 hidden field value='damaged'
+  - StockUsageReportForm.php  : Date-range report; blue banner header;
+                                From/To date pickers with Generate button;
+                                results table grouped by category showing
+                                Item, Code, Total Used; summary line with
+                                item count; Export CSV button downloads
+                                stock-usage-yyyymmdd-hhmm.csv with columns
+                                Category, Item, Code, Total Used, From, To;
+                                no results shown on first load
 
 
 --------------------------------------------------------------------------------
@@ -122,22 +134,26 @@ app/controller/manager/MenuManager.php
     const DELIVERYPAGE         = 404;
     const STOCKOUTPAGE         = 405;
     const STOCKLEVELREPORTPAGE = 406;
-    const DAMAGEDSTOCKPAGE     = 407;
+    const DAMAGEDSTOCKPAGE       = 407;
+    const STOCKUSAGEREPORTPAGE   = 408;
 
 app/controller/manager/ManagerCollection.php
-  Registered all 8 new managers in constructor and added accessor methods.
+  Registered all 9 new managers in constructor and added accessor methods.
 
 app/view/form/FormCollection.php
-  Registered all 8 new forms in constructor and added accessor methods.
+  Registered all 9 new forms in constructor and added accessor methods.
 
 app/controller/ViewController.php
-  - Added 8 cases to setpages() switch statement
+  - Added 9 cases to setpages() switch statement
   - Added STOCKTAKEPAGE, DELIVERYPAGE, STOCKOUTPAGE, STOCKLEVELREPORTPAGE,
-    DAMAGEDSTOCKPAGE to prepareHTMLbody() switch
+    DAMAGEDSTOCKPAGE, STOCKUSAGEREPORTPAGE to prepareHTMLbody() switch
   - Added private methods:
       prepare_stocktake_body()
-      prepare_stockmovement_body()   (shared by deliveries, stockout, damaged)
+      prepare_stockmovement_body()      (shared by deliveries, stockout, damaged)
       prepare_stocklevelreport_body()
+      prepare_stockusagereport_body()   (reads from/to from requestdata,
+                                         validates date format, sets on manager,
+                                         passes dates to form via $parents)
 
 app/controller/RequestProcessController.php
   Added form routing cases:
@@ -146,7 +162,8 @@ app/controller/RequestProcessController.php
     stocktakeform      -> StocktakeManager
     deliveryform       -> DeliveryManager
     stockoutform       -> StockoutManager
-    damagedstockform   -> DamagedStockManager
+    damagedstockform        -> DamagedStockManager
+    stockusagereportform    -> no-op (date filter submission, no DB write)
   (StockLevelReportForm is read-only — no form submission handling needed)
 
 vendor/fw/factory/ClassFactory.php
@@ -220,6 +237,25 @@ app/assets/css/forms.0.2.css
   Damaged stock page:
     .vols-damaged-header           Dark red/burgundy (#fde8e8 / #b22222)
 
+  Stock usage report page:
+    .vols-usagereport-header       Blue tones (#f0f4ff / #4a72c4)
+    .vols-usagereport-icon
+    .vols-usagereport-headertext
+    .vols-usagereport-filter       Flex row holding date inputs and Generate button
+    .vols-usagereport-label
+    .vols-usagereport-dateinput
+    .vols-usagereport-genbtn       Blue Generate Report button
+    .vols-usagereport-summary      Summary line with item count and CSV button
+    .vols-usagereport-csvbtn       Green export button (margin-left: auto)
+    .vols-usagereport-table
+    .vols-usagereport-colheadings  3-column grid: item / code / total used
+    .vols-usagereport-row
+    .vols-usagereport-category     Category heading rows
+    .vols-usagereport-col-name
+    .vols-usagereport-col-code
+    .vols-usagereport-col-num      Right-aligned numeric column
+    .vols-usagereport-qty          Amber, bold total used values
+
 
 --------------------------------------------------------------------------------
 DATABASE SETUP (stock_setup.sql)
@@ -235,10 +271,11 @@ Pages (table: page):
   id=54  pagenumber=405  Stock Usage
   id=56  pagenumber=406  Stock Level Report
   id=57  pagenumber=407  Damaged Stock
+  id=58  pagenumber=408  Stock Usage Report
 
 Page actions (table: page_action):
   Pages 401-402: VIEW + INSERT + UPDATE + DELETE
-  Pages 403-407: VIEW + INSERT only (historical records are not editable)
+  Pages 403-408: VIEW + INSERT only (historical records are not editable)
 
 Menu items (table: menuitem):
   menucode=10     "Stock"            (submenu heading)
@@ -249,6 +286,7 @@ Menu items (table: menuitem):
   menucode=10_5   "Stock Usage"      -> page 405
   menucode=10_6   "Stock Levels"     -> page 406
   menucode=10_7   "Damaged Stock"    -> page 407
+  menucode=10_8   "Usage Report"     -> page 408
 
 stock_movement.movement_type ENUM extended:
   ALTER TABLE stock_movement MODIFY movement_type
@@ -338,7 +376,20 @@ tests/test_stocklevel.php — page 406 breakdown columns (date-based):
   Ordering: category then item name                                 PASS
   Total: 29 tests, 29 passed, 0 failed.
 
-Grand total: 70 tests, 70 passed, 0 failed.
+tests/test_usagereport.php — page 408 (Stock Usage Report):
+  Returns only items with stockouts in full range                   PASS
+  Correct totals across all months (BB=19, TS=14, RC=12)           PASS
+  Non-stockout movements (damaged, delivery) excluded               PASS
+  January filter: correct items and totals                          PASS
+  Item absent from period not included in results                   PASS
+  February filter: correct items and totals                         PASS
+  Single-day boundary range                                         PASS
+  Empty date range returns 0 rows                                   PASS
+  Ordering: category then item name                                 PASS
+  category_name present in results                                  PASS
+  Total: 18 tests, 18 passed, 0 failed.
+
+Grand total: 88 tests, 88 passed, 0 failed.
 
 
 --------------------------------------------------------------------------------
@@ -368,6 +419,8 @@ GIT COMMITS
   f7b69b1  Format stocktake dates as dd-mm-yyyy on report page and CSV export
   76c181c  Update development report: dd-mm-yyyy date format change
   3092bad  Include time in CSV export filename: stock-levels-yyyymmdd-hhmm.csv
+  da21c8b  Update development report: CSV export filename includes time
+  ce27266  Add Stock Usage Report page (page 408)
 
 
 ================================================================================
