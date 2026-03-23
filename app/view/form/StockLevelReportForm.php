@@ -55,7 +55,7 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
                 'category' => $item['category_name'] ?? 'Uncategorised',
                 'name'     => $item['Name'],
                 'code'     => $item['Code'],
-                'stdate'   => $item['stocktake_date'] ? substr($item['stocktake_date'], 0, 10) : '',
+                'stdate'   => $item['stocktake_date'] ? date('d-m-Y', strtotime($item['stocktake_date'])) : '',
                 'stqty'    => (float)($item['stocktake_qty']    ?? 0),
                 'deliv'    => (float)($item['deliveries_since'] ?? 0),
                 'used'     => (float)($item['stockouts_since']  ?? 0),
@@ -93,7 +93,7 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
             $deliv    = (float)($item["deliveries_since"] ?? 0);
             $used     = (float)($item["stockouts_since"]  ?? 0);
             $damaged  = (float)($item["damaged_since"]    ?? 0);
-            $stdate   = $item["stocktake_date"] ? substr($item["stocktake_date"], 0, 10) : '—';
+            $stdate   = $item["stocktake_date"] ? date('d-m-Y', strtotime($item["stocktake_date"])) : '—';
             $name     = htmlspecialchars($item["Name"]);
             $code     = htmlspecialchars($item["Code"]);
             $qtyclass = $qty <= 0 ? "vols-stockreport-qty vols-stockreport-qty-zero"
