@@ -121,7 +121,7 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
         return "function formhaserrors() { return 0; }\n"
              . "function displayselectedrecord() {}\n"
              . "function downloadStockCSV() {\n"
-             . "    var rows = [['Category','Item','Code','Last Stocktake','Stocktake Qty','+ Deliveries','- Used','- Damaged','= Current']];\n"
+             . "    var rows = [['Category','Item','Code','Last Stocktake','Stocktake Qty','Deliveries In','Used','Damaged','Current Qty']];\n"
              . "    for (var i = 0; i < stockReportData.length; i++) {\n"
              . "        var r = stockReportData[i];\n"
              . "        rows.push([r.category, r.name, r.code, r.stdate, r.stqty, r.deliv, r.used, r.damaged, r.current]);\n"
