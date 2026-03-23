@@ -28,6 +28,7 @@ class FormCollection {
                                 ,protected StocktakeForm $stocktakeform
                                 ,protected DeliveryForm $deliveryform
                                 ,protected StockoutForm $stockoutform
+                                ,protected StockLevelReportForm $stocklevelreportform
                                 // ,protected SessionListForm $SessionList
                             ){
         if ($this->trace ) { echo "Enter ".__METHOD__."<br>\n"; }
@@ -106,5 +107,8 @@ class FormCollection {
     }
     public function StockoutForm() {
         return $this->stockoutform;
+    }
+    public function StockLevelReportForm() {
+        return $this->stocklevelreportform;
     }
 }

@@ -21,6 +21,7 @@ class ManagerCollection {
                                ,protected StocktakeManager $stocktakemanager
                                ,protected DeliveryManager $deliverymanager
                                ,protected StockoutManager $stockoutmanager
+                               ,protected StockLevelReportManager $stocklevelreportmanager
                                ){
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>\n"; }
 	}
@@ -95,5 +96,9 @@ class ManagerCollection {
     public function StockoutManager() {
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
         return $this->stockoutmanager;
+    }
+    public function StockLevelReportManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->stocklevelreportmanager;
     }
 }

@@ -1675,3 +1675,90 @@ input
 .vols-stockmaint-text {
     flex: 1;
 }
+
+/* ============================================================
+   Stock level report page
+   ============================================================ */
+
+.vols-stockreport-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: 4px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    background-color: #e8f4e8;
+    border-left: 4px solid #3a7a3a;
+    color: #1e4e1e;
+}
+
+.vols-stockreport-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vols-stockreport-headertext {
+    flex: 1;
+}
+
+.vols-stockreport-table {
+    width: 100%;
+}
+
+.vols-stockreport-colheadings {
+    display: grid;
+    grid-template-columns: 1fr 120px 100px;
+    padding: 0.4rem 0.6rem;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+    border-bottom: 2px solid var(--midgrey, #aaa);
+    margin-bottom: 0.2rem;
+}
+
+.vols-stockreport-category {
+    grid-column: 1 / -1;
+    background-color: var(--volscolor2, #d0e8f0);
+    padding: 0.35rem 0.6rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-top: 0.6rem;
+    border-radius: 3px;
+}
+
+.vols-stockreport-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 100px;
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid var(--lightgrey, #e0e0e0);
+    font-size: 0.9rem;
+}
+
+.vols-stockreport-row:hover {
+    background-color: var(--neutralbg, #f5f5f5);
+}
+
+.vols-stockreport-col-name { }
+.vols-stockreport-col-code { color: #666; font-style: italic; }
+
+.vols-stockreport-qty {
+    font-weight: bold;
+    text-align: right;
+    padding-right: 0.5rem;
+}
+
+.vols-stockreport-qty-ok   { color: var(--doitbg, #5c903a); }
+.vols-stockreport-qty-zero { color: var(--volscolor4, #cc0000); }
+
+@media screen and (max-width: 500px) {
+    .vols-stockreport-colheadings,
+    .vols-stockreport-row {
+        grid-template-columns: 1fr 80px;
+    }
+    .vols-stockreport-col-code { display: none; }
+}

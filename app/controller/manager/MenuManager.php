@@ -37,11 +37,12 @@ class MenuManager  extends \fw\controller\manager\StdManager
     const MENUITEMPAGE      = 501;
     const LOGOUTPAGE        = 999;
     // Stock management pages
-    const STOCKCATEGORYPAGE = 401;
-    const STOCKPAGE         = 402;
-    const STOCKTAKEPAGE     = 403;
-    const DELIVERYPAGE      = 404;
-    const STOCKOUTPAGE      = 405;
+    const STOCKCATEGORYPAGE    = 401;
+    const STOCKPAGE            = 402;
+    const STOCKTAKEPAGE        = 403;
+    const DELIVERYPAGE         = 404;
+    const STOCKOUTPAGE         = 405;
+    const STOCKLEVELREPORTPAGE = 406;
     private $pagenumbers = ["0"=>"Submenu Heading"];
     private $c2v;
     protected $name = "Menuitem";
