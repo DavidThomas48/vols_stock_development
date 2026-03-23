@@ -1,0 +1,286 @@
+================================================================================
+STOCK TRACKING SYSTEM — DEVELOPMENT REPORT
+Project: Woodend Neighbourhood House Food Bank Volunteer Rostering
+Date:    2026-03-23
+================================================================================
+
+
+OVERVIEW
+--------
+A complete stock tracking system was designed and built, integrated into the
+existing PHP MVC volunteer management application. The system covers the full
+stock lifecycle: setting up categories and items, recording stocktakes, logging
+deliveries (stock in), recording stock usage (stock out), and viewing current
+stock levels.
+
+Six new pages were added to the application under a new "Stock" menu group.
+
+
+--------------------------------------------------------------------------------
+DATABASE
+--------------------------------------------------------------------------------
+
+Tables used (pre-existing, created by client):
+  - stock_category   : id, Name
+  - stock            : id, Name, Code, category_id
+  - stock_movement   : id, stock_id, movement_type, qty, unit, unit_qty,
+                       movement_date
+
+Movement types stored in stock_movement.movement_type:
+  - stocktake_adjustment  : sets the absolute stock level at a point in time
+  - delivery              : adds stock to inventory
+  - stockout              : records stock taken from inventory
+  - reversal              : (reserved for future use)
+
+Stock level calculation:
+  Current Qty = (last stocktake qty)
+              + (sum of deliveries since last stocktake)
+              - (sum of stockouts since last stocktake)
+
+Schema fixes applied (stock_setup.sql):
+  - Added AUTO_INCREMENT to stock_movement.id
+  - Added movement_date DATETIME DEFAULT CURRENT_TIMESTAMP to stock_movement
+
+
+--------------------------------------------------------------------------------
+NEW FILES CREATED
+--------------------------------------------------------------------------------
+
+Database Table Classes (app/database/table/)
+  - StockCategoryTable.php   : CRUD table for stock_category
+  - StockTable.php           : CRUD table for stock; includes
+                               getstockwithlevels() — complex correlated
+                               subquery calculating current qty per item
+  - StockMovementTable.php   : CRUD table for stock_movement; includes
+                               getmovementsbytype($type) JOIN query and
+                               insertstocktake() helper
+
+Manager Classes (app/controller/manager/)
+  - StockCategoryManager.php     : Standard CRUD manager for categories
+  - StockManager.php             : CRUD manager; overrides getparents() to
+                                   load categories for the dropdown
+  - StocktakeManager.php         : Overrides getallrecords() to use
+                                   getstockwithlevels(); implements
+                                   performaction('stocktake') to bulk-insert
+                                   stocktake_adjustment records from form data
+  - DeliveryManager.php          : Overrides getallrecords() to load delivery
+                                   movements; overrides getparents() to load
+                                   stock items; setdefaults() sets
+                                   movement_type='delivery' and
+                                   movement_date=now()
+  - StockoutManager.php          : Identical to DeliveryManager but for
+                                   movement_type='stockout'
+  - StockLevelReportManager.php  : Read-only manager; calls
+                                   getstockwithlevels() for the report page
+
+Form Classes (app/view/form/)
+  - StockCategoryForm.php     : Standard CRUD form; blue banner header;
+                                Name field only
+  - StockForm.php             : Standard CRUD form; teal banner header;
+                                Name, Code, and Category dropdown fields
+  - StocktakeForm.php         : Custom form (no standard CRUD buttons);
+                                purple banner header; renders a category-
+                                grouped table with qty and unit inputs per
+                                item; "Save Stocktake" submit button
+  - DeliveryForm.php          : CRUD form (new/save/cancel/reset only —
+                                no edit or delete of historical records);
+                                green banner header with upward arrow;
+                                stock item dropdown, qty, unit, unit_qty
+  - StockoutForm.php          : Same as DeliveryForm; amber banner header
+                                with downward arrow
+  - StockLevelReportForm.php  : Read-only report; green banner header;
+                                category-grouped table showing item name,
+                                code, and current qty; quantities shown in
+                                green (positive) or red (zero/negative);
+                                no action buttons, no record selector
+
+
+--------------------------------------------------------------------------------
+MODIFIED FILES
+--------------------------------------------------------------------------------
+
+app/controller/manager/MenuManager.php
+  Added page number constants:
+    const STOCKCATEGORYPAGE    = 401;
+    const STOCKPAGE            = 402;
+    const STOCKTAKEPAGE        = 403;
+    const DELIVERYPAGE         = 404;
+    const STOCKOUTPAGE         = 405;
+    const STOCKLEVELREPORTPAGE = 406;
+
+app/controller/manager/ManagerCollection.php
+  Registered all 6 new managers in constructor and added accessor methods.
+
+app/view/form/FormCollection.php
+  Registered all 6 new forms in constructor and added accessor methods.
+
+app/controller/ViewController.php
+  - Added 6 cases to setpages() switch statement
+  - Added STOCKTAKEPAGE, DELIVERYPAGE, STOCKOUTPAGE, STOCKLEVELREPORTPAGE
+    to prepareHTMLbody() switch
+  - Added private methods:
+      prepare_stocktake_body()
+      prepare_stockmovement_body()
+      prepare_stocklevelreport_body()
+
+app/controller/RequestProcessController.php
+  Added form routing cases:
+    stockcategoryform  -> StockCategoryManager
+    stockform          -> StockManager
+    stocktakeform      -> StocktakeManager
+    deliveryform       -> DeliveryManager
+    stockoutform       -> StockoutManager
+  (StockLevelReportForm is read-only — no form submission handling needed)
+
+vendor/fw/factory/ClassFactory.php
+  Fixed hardcoded 21-argument limit in class instantiation. FormCollection
+  grew beyond 21 constructor arguments, causing a runtime error.
+  Changed from:
+    for (;$paindex <= 20; ) $pa[$paindex++] = '';
+    return new $cn($pa[0],$pa[1],...,$pa[20]);
+  To:
+    return new $cn(...$pa);
+
+app/assets/css/forms.0.2.css
+  Added CSS blocks for all new stock pages:
+
+  Stock maintenance pages (categories and items):
+    .vols-stockmaint-header        Base flex banner style
+    .vols-stockcategory-header     Blue tones (#e8f0fb / #4a72c4)
+    .vols-stockitem-header         Teal tones (#e4f4f8 / #2a8aac)
+    .vols-stockmaint-icon
+    .vols-stockmaint-text
+
+  Stocktake page:
+    .vols-stocktake-header         Purple tones (#f0eafa / #7c4dbb)
+    .vols-stocktake-icon
+    .vols-stocktake-headertext
+    .vols-stocktake-category-heading
+    .vols-stocktake-row            4-column CSS grid layout
+    .vols-stocktake-name
+    .vols-stocktake-code
+    .vols-stocktake-current        Current qty shown in red
+    .vols-stocktake-input
+    .vols-stocktake-label
+    .vols-stocktake-qty
+    .vols-stocktake-unit
+    .vols-stocktake-submitrow
+    Responsive: 2-column layout at max-width 650px
+
+  Delivery and stockout pages:
+    .vols-movement-header          Base flex banner style
+    .vols-delivery-header          Green tones (#e8f5e2 / --doitbg)
+    .vols-stockout-header          Amber tones (#fff4e0 / #c07a00)
+    .vols-movement-icon
+    .vols-movement-text
+    .vols-movement-fields          Wrapper around form input rows
+
+  Stock level report page:
+    .vols-stockreport-header       Green tones (#e8f4e8 / #3a7a3a)
+    .vols-stockreport-icon
+    .vols-stockreport-headertext
+    .vols-stockreport-table
+    .vols-stockreport-colheadings  3-column grid (item / code / qty)
+    .vols-stockreport-category     Category heading rows
+    .vols-stockreport-row
+    .vols-stockreport-col-name
+    .vols-stockreport-col-code
+    .vols-stockreport-qty
+    .vols-stockreport-qty-ok       Green for positive stock
+    .vols-stockreport-qty-zero     Red for zero or negative stock
+    Responsive: 2-column layout at max-width 500px (code column hidden)
+
+
+--------------------------------------------------------------------------------
+DATABASE SETUP (stock_setup.sql)
+--------------------------------------------------------------------------------
+
+The setup script inserts the following records:
+
+Pages (table: page):
+  id=50  pagenumber=401  Stock Categories
+  id=51  pagenumber=402  Stock Items
+  id=52  pagenumber=403  Stocktake
+  id=53  pagenumber=404  Deliveries
+  id=54  pagenumber=405  Stock Usage
+  id=56  pagenumber=406  Stock Level Report
+
+Page actions (table: page_action):
+  Pages 401-402: VIEW + INSERT + UPDATE + DELETE
+  Pages 403-406: VIEW + INSERT only (historical records are not editable)
+
+Menu items (table: menuitem):
+  menucode=10     "Stock"            (submenu heading)
+  menucode=10_1   "Stock Categories" -> page 401
+  menucode=10_2   "Stock Items"      -> page 402
+  menucode=10_3   "Stocktake"        -> page 403
+  menucode=10_4   "Deliveries"       -> page 404
+  menucode=10_5   "Stock Usage"      -> page 405
+  menucode=10_6   "Stock Levels"     -> page 406
+
+
+--------------------------------------------------------------------------------
+BUGS FIXED DURING DEVELOPMENT
+--------------------------------------------------------------------------------
+
+1. ClassFactory 21-argument limit
+   FormCollection grew to 26 constructor arguments, exceeding the hardcoded
+   limit in vendor/fw/factory/ClassFactory.php. Fixed by switching to the
+   PHP spread operator (...$pa).
+
+2. PHP 8.2 dynamic property deprecation warnings
+   All new manager classes were missing "protected $db;" declarations.
+   All new form classes were missing "protected $names = [];" and
+   "protected $parents = [];" declarations. Added explicit declarations
+   to all 10 new classes.
+
+3. MariaDB trigger definer error
+   Triggers and the LogDML stored procedure had a definer of
+   sarum964_root@144.6.77.193 (from the original server import). UPDATE
+   operations on the user table failed. Fixed by recreating the user table
+   triggers and LogDML procedure with definer root@localhost.
+
+4. menuitem menu_number column
+   The Stock Level Report menu item (10_6) was inserted with menu_number=10
+   instead of 0, causing it not to appear in the menu. Fixed by updating
+   the record and correcting the stock_setup.sql script.
+
+
+--------------------------------------------------------------------------------
+TESTING
+--------------------------------------------------------------------------------
+
+All functionality was tested via direct PHP/SQL scripts against the live
+MariaDB database:
+
+  Page 401 — Stock Categories : Insert, count, update, delete       PASS
+  Page 402 — Stock Items      : Insert, count, update, join         PASS
+  Page 403 — Stocktake        : Bulk insert, level calculation      PASS
+  Page 404 — Deliveries       : Insert, level after delivery        PASS
+                                (Baked Beans: 24 + 48 = 72)
+  Page 405 — Stock Usage      : Insert, level after stockout        PASS
+                                (Tomato Soup: 12 - 5 = 7)
+                                (Pasta: 10 + 5 - 3 = 12)
+  Page 406 — Stock Levels     : Full report query, 3 rows,          PASS
+                                correct category grouping
+
+  Total: 20 tests, 20 passed, 0 failed.
+
+
+--------------------------------------------------------------------------------
+GIT COMMITS
+--------------------------------------------------------------------------------
+
+  15e0119  Post setup update  (pre-existing)
+  [new]    Add stock tracking system — core pages and DB setup
+  [new]    Add CSS styling for stocktake page
+  [new]    Add CSS styling and header banners for delivery and stockout pages
+  [new]    Add CSS styling and header banners for stock maintenance pages
+  [new]    Add CSS banner header to stocktake page, matching other stock pages
+  [new]    Add stock level report page (page 406)
+  [new]    Fix stock level report: menu_number and stock_setup.sql
+
+
+================================================================================
+END OF REPORT
+================================================================================
