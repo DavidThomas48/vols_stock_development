@@ -5,7 +5,13 @@ if ($m->connect_error) die("DB error: " . $m->connect_error . "\n");
 $m->query('DELETE FROM stock_movement');
 echo "Cleared existing movements\n";
 
-$bb = 15; $ts = 16; $rc = 17;
+$r  = $m->query("SELECT id, Name FROM stock");
+$ids = [];
+while ($row = $r->fetch_assoc()) $ids[$row['Name']] = $row['id'];
+$bb = $ids['Baked Beans'];
+$ts = $ids['Tomato Soup'];
+$rc = $ids['Rice'];
+echo "Stock IDs: BB={$bb}, TS={$ts}, RC={$rc}\n";
 
 $rows = [
     // Stocktake 6 Jan
