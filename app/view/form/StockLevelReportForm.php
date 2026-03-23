@@ -135,7 +135,10 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
              . "    var blob = new Blob([csv], {type: 'text/csv'});\n"
              . "    var a = document.createElement('a');\n"
              . "    a.href = URL.createObjectURL(blob);\n"
-             . "    a.download = 'stock-levels-' + new Date().toISOString().slice(0,10) + '.csv';\n"
+             . "    var d = new Date();\n"
+             . "    var pad = function(n){return String(n).padStart(2,'0');};\n"
+             . "    var ts = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());\n"
+             . "    a.download = 'stock-levels-' + ts + '.csv';\n"
              . "    a.click();\n"
              . "    URL.revokeObjectURL(a.href);\n"
              . "}\n";
