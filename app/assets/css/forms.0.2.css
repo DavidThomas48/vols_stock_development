@@ -1445,3 +1445,134 @@ input
     flex-wrap: nowrap;
     justify-content: space-around ; 
 }
+
+/*==================================================================*/
+/* STOCKTAKE PAGE                                                    */
+/*==================================================================*/
+
+.vols-stocktake-instructions {
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--volscolor2);
+    border-left: 4px solid var(--volscolor4);
+    font-size: 1.3rem;
+    color: #444;
+}
+
+.vols-stocktake-category-heading {
+    padding: 0.5rem 1rem;
+    margin-top: 0.8rem;
+    background-color: var(--volscolor1);
+    font-size: 1.3rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid var(--volscolor4);
+    color: #333;
+}
+
+.vols-stocktake-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.2fr 1.2fr;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--lightgrey);
+    min-height: 4rem;
+}
+
+.vols-stocktake-row:hover {
+    background-color: var(--neutralbg);
+}
+
+.vols-stocktake-name {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #222;
+}
+
+.vols-stocktake-code {
+    font-size: 1.1rem;
+    color: var(--midgrey);
+    font-weight: normal;
+}
+
+.vols-stocktake-current {
+    font-size: 1.2rem;
+    color: #555;
+    white-space: nowrap;
+}
+
+.vols-stocktake-current strong {
+    color: var(--volscolor4);
+    font-size: 1.4rem;
+}
+
+.vols-stocktake-input {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.vols-stocktake-label {
+    font-size: 1.1rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.vols-stocktake-qty {
+    width: 7rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 1.3rem;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    text-align: right;
+}
+
+.vols-stocktake-qty:focus {
+    background-color: var(--inputfocusbg);
+    border-color: var(--volscolor4);
+    outline: none;
+}
+
+.vols-stocktake-unit {
+    width: 8rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 1.3rem;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+}
+
+.vols-stocktake-unit:focus {
+    background-color: var(--inputfocusbg);
+    border-color: var(--volscolor4);
+    outline: none;
+}
+
+.vols-stocktake-submitrow {
+    margin-top: 1.5rem;
+    padding: 0.5rem 0.8rem;
+}
+
+.vols-stocktake-submitrow #savestocktake {
+    max-width: 20rem;
+    margin: 0 auto;
+    font-size: 1.4rem;
+    padding: 0.8rem;
+    border-radius: 4px;
+}
+
+/* Responsive: stack to two columns on narrow screens */
+@media screen and (max-width: 650px) {
+    .vols-stocktake-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+    }
+    .vols-stocktake-current {
+        grid-column: 2;
+        grid-row: 1;
+        text-align: right;
+    }
+    .vols-stocktake-input {
+        grid-column: span 1;
+    }
+}
