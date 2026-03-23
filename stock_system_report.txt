@@ -2,7 +2,7 @@
 STOCK TRACKING SYSTEM — DEVELOPMENT REPORT
 Project: Woodend Neighbourhood House Food Bank Volunteer Rostering
 Date:    2026-03-23
-Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time; usage report)
+Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time; usage report; demo data)
 ================================================================================
 
 
@@ -393,6 +393,35 @@ Grand total: 88 tests, 88 passed, 0 failed.
 
 
 --------------------------------------------------------------------------------
+DEMO DATA (tests/seed_movements.php)
+--------------------------------------------------------------------------------
+
+A seed script is provided to populate the stock_movement table with realistic
+demo data. Run via: /path/to/php.exe tests/seed_movements.php
+
+WARNING: Clears all existing stock_movement records before inserting.
+
+Seeded movements (24 records across 3 items):
+
+  06-01-2026  Stocktake      Baked Beans=48, Tomato Soup=36, Rice=25
+  20-01-2026  Delivery       Baked Beans +24, Tomato Soup +12
+  22-01-2026  Stockout       Baked Beans -8,  Tomato Soup -5,  Rice -3
+  05-02-2026  Stockout       Baked Beans -12, Tomato Soup -8,  Rice -6
+  10-02-2026  Damaged        Tomato Soup -3
+  18-02-2026  Delivery       Baked Beans +36, Rice +20
+  26-02-2026  Stockout       Baked Beans -10, Tomato Soup -6,  Rice -8
+  05-03-2026  Damaged        Baked Beans -2
+  10-03-2026  Delivery       Tomato Soup +24
+  12-03-2026  Stockout       Baked Beans -15, Tomato Soup -10, Rice -5
+  19-03-2026  Stockout       Baked Beans -6,  Rice -4
+
+Resulting current stock levels:
+  Baked Beans  :  stocktake=48  +deliveries=60  -used=51  -damaged=2   = 55
+  Tomato Soup  :  stocktake=36  +deliveries=36  -used=29  -damaged=3   = 40
+  Rice         :  stocktake=25  +deliveries=20  -used=26  -damaged=0   = 19
+
+
+--------------------------------------------------------------------------------
 GIT COMMITS
 --------------------------------------------------------------------------------
 
@@ -421,6 +450,16 @@ GIT COMMITS
   3092bad  Include time in CSV export filename: stock-levels-yyyymmdd-hhmm.csv
   da21c8b  Update development report: CSV export filename includes time
   ce27266  Add Stock Usage Report page (page 408)
+  3ab5d22  Update development report: Stock Usage Report page (page 408)
+  dfc3799  Add last updated date to development report
+  92a79d7  Add CSV export to stock level report page
+  724cf3f  Fix CSV export column headings: remove leading +/-/= to prevent Excel formula errors
+  d76e14a  Update development report: CSV export feature and Excel formula bug fix
+  f7b69b1  Format stocktake dates as dd-mm-yyyy on report page and CSV export
+  76c181c  Update development report: dd-mm-yyyy date format change
+  3092bad  Include time in CSV export filename: stock-levels-yyyymmdd-hhmm.csv
+  da21c8b  Update development report: CSV export filename includes time
+  1705ebd  Add seed script for stock movement demo data
 
 
 ================================================================================
