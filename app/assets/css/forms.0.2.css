@@ -1704,6 +1704,26 @@ input
     flex: 1;
 }
 
+.vols-stockreport-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.6rem;
+}
+
+.vols-stockreport-csvbtn {
+    background-color: var(--doitbg, #5c903a);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.vols-stockreport-csvbtn:hover {
+    opacity: 0.85;
+}
+
 .vols-stockreport-table {
     width: 100%;
 }
