@@ -57,8 +57,8 @@ class StockMovementTable extends \fw\database\table\MySQLTable
         $query .= " JOIN stock s ON sm.stock_id = s.id";
         $query .= " LEFT JOIN stock_category sc ON s.category_id = sc.id";
         $query .= " WHERE sm.movement_type = 'stockout'";
-        $query .= " AND sm.movement_date >= '{$from} 00:00:00'";
-        $query .= " AND sm.movement_date <= '{$to} 23:59:59'";
+        $query .= " AND DATE(sm.movement_date) >= '{$from}'";
+        $query .= " AND DATE(sm.movement_date) <= '{$to}'";
         $query .= " GROUP BY s.id, s.Name, s.Code, sc.Name";
         $query .= " ORDER BY sc.Name, s.Name";
         $success = $this->query($query, $results, $numrows, $trace);
