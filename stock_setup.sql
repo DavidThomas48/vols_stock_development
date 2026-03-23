@@ -63,7 +63,15 @@ INSERT INTO `menuitem` (`id`, `menucode`, `page_number`, `text`, `inactive`, `me
 (42, '10_2', '402', 'Stock Items',      0, 0, 0),
 (43, '10_3', '403', 'Stocktake',        0, 0, 0),
 (44, '10_4', '404', 'Deliveries',       0, 0, 0),
-(45, '10_5', '405', 'Stock Usage',      0, 0, 0);
+(45, '10_5', '405', 'Stock Usage',      0, 0, 0),
+(46, '10_6', '406', 'Stock Levels',    0, 0, 0);
+
+-- Stock Level Report (page id=56) — VIEW only
+INSERT INTO `page` (`id`, `pagenumber`, `name`, `usepagenum`, `pagetype`, `unrestricted`, `submenu`, `menuid`, `menutext`, `maxcolumns`, `autoextendtasks`) VALUES
+(56, 406, 'Stock Level Report', 0, 3, 0, 4, 'stockleveloption', 'Stock Levels', 0, 0);
+
+INSERT INTO `page_action` (`page_id`, `action_id`) VALUES
+(56, 1);
 
 -- =============================================================================
 -- After running this script:
