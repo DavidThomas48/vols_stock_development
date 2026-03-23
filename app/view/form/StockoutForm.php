@@ -55,12 +55,19 @@ class StockoutForm extends \fw\view\form\StdCRUDForm {
         $formfields .= '<input type="hidden" name="movement_date" id="movement_date" value="" />'."\n";
         $formfields .= '<input type="hidden" name="stock_name"    id="stock_name"    value="" />'."\n";
 
+        $formfields .= '<div class="vols-movement-header vols-stockout-header">';
+        $formfields .= '<span class="vols-movement-icon">&#8681;</span>';
+        $formfields .= '<span class="vols-movement-text">Record stock used. Select the item, enter the quantity taken from inventory, and save.</span>';
+        $formfields .= '</div>';
+
+        $formfields .= '<div class="vols-movement-fields">';
         $formfields .= $this->component->buildselectrow("stock_id", 1, 1, 'Stock Item', $stockdata, "", $optn, false, false, true, false, '', false);
         $this->component->setwidths(30, 15, 55);
         $formfields .= $this->component->buildinputrow("qty",      3, "", 'Quantity used',  'Number of units taken from stock', 10, 10, true, '', '');
         $formfields .= $this->component->buildinputrow("unit",     4, "", 'Unit',            'e.g. kg, can, box',                10, 24, false, '', '');
         $formfields .= $this->component->buildinputrow("unit_qty", 5, "", 'Unit size',       'Items per unit (default 1)',        10, 6,  false, '', '');
         $this->resetwidths();
+        $formfields .= '</div>';
 
         $this->preparecommontop(false, false, '', $this->movementid);
         return $formfields;

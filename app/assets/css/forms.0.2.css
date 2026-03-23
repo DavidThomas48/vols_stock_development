@@ -1576,3 +1576,48 @@ input
         grid-column: span 1;
     }
 }
+
+/* ============================================================
+   Stock movement pages: delivery and stockout
+   ============================================================ */
+
+/* Banner header strip at the top of delivery / stockout forms */
+.vols-movement-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: 4px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Delivery header — green tones (stock coming IN) */
+.vols-delivery-header {
+    background-color: #e8f5e2;
+    border-left: 4px solid var(--doitbg, #5c903a);
+    color: #3a5e24;
+}
+
+/* Stockout header — amber tones (stock going OUT) */
+.vols-stockout-header {
+    background-color: #fff4e0;
+    border-left: 4px solid #c07a00;
+    color: #7a4e00;
+}
+
+.vols-movement-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.vols-movement-text {
+    flex: 1;
+}
+
+/* Wrapper around the form input rows */
+.vols-movement-fields {
+    padding: 0.5rem 0;
+}
