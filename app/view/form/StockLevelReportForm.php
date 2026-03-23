@@ -48,6 +48,27 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
         $formfields .= '<span class="vols-stockreport-headertext">Current stock levels. Each row shows the last stocktake as the baseline, then deliveries added and stock used or damaged since that date.</span>';
         $formfields .= '</div>';
 
+        // Build JS data array for CSV export
+        $jsrows = [];
+        foreach ($this->alldata as $item) {
+            $jsrows[] = json_encode([
+                'category' => $item['category_name'] ?? 'Uncategorised',
+                'name'     => $item['Name'],
+                'code'     => $item['Code'],
+                'stdate'   => $item['stocktake_date'] ? substr($item['stocktake_date'], 0, 10) : '',
+                'stqty'    => (float)($item['stocktake_qty']    ?? 0),
+                'deliv'    => (float)($item['deliveries_since'] ?? 0),
+                'used'     => (float)($item['stockouts_since']  ?? 0),
+                'damaged'  => (float)($item['damaged_since']    ?? 0),
+                'current'  => (float)($item['current_qty']      ?? 0),
+            ]);
+        }
+        $formfields .= '<script>var stockReportData=[' . implode(',', $jsrows) . '];</script>';
+
+        $formfields .= '<div class="vols-stockreport-toolbar">';
+        $formfields .= '<button type="button" class="vols-stockreport-csvbtn" onclick="downloadStockCSV()">&#8681; Export CSV</button>';
+        $formfields .= '</div>';
+
         $formfields .= '<div class="vols-stockreport-table">';
         $formfields .= '<div class="vols-stockreport-colheadings">';
         $formfields .= '<div class="vols-stockreport-col-name">Item</div>';
@@ -97,6 +118,26 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function formscript() {
-        return "function formhaserrors() { return 0; }\nfunction displayselectedrecord() {}";
+        return "function formhaserrors() { return 0; }\n"
+             . "function displayselectedrecord() {}\n"
+             . "function downloadStockCSV() {\n"
+             . "    var rows = [['Category','Item','Code','Last Stocktake','Stocktake Qty','+ Deliveries','- Used','- Damaged','= Current']];\n"
+             . "    for (var i = 0; i < stockReportData.length; i++) {\n"
+             . "        var r = stockReportData[i];\n"
+             . "        rows.push([r.category, r.name, r.code, r.stdate, r.stqty, r.deliv, r.used, r.damaged, r.current]);\n"
+             . "    }\n"
+             . "    var csv = rows.map(function(row) {\n"
+             . "        return row.map(function(v) {\n"
+             . "            var s = String(v);\n"
+             . "            return s.indexOf(',') !== -1 || s.indexOf('\"') !== -1 ? '\"' + s.replace(/\"/g, '\"\"') + '\"' : s;\n"
+             . "        }).join(',');\n"
+             . "    }).join('\\r\\n');\n"
+             . "    var blob = new Blob([csv], {type: 'text/csv'});\n"
+             . "    var a = document.createElement('a');\n"
+             . "    a.href = URL.createObjectURL(blob);\n"
+             . "    a.download = 'stock-levels-' + new Date().toISOString().slice(0,10) + '.csv';\n"
+             . "    a.click();\n"
+             . "    URL.revokeObjectURL(a.href);\n"
+             . "}\n";
     }
 }
