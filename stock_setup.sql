@@ -87,6 +87,16 @@ INSERT INTO `menuitem` (`menucode`, `page_number`, `text`, `inactive`, `menu_num
 ALTER TABLE `stock_movement`
     MODIFY `movement_type` ENUM('stocktake_adjustment','delivery','stockout','damaged','reversal') NOT NULL;
 
+-- Stock Usage Report (page id=58) — VIEW + INSERT only
+INSERT INTO `page` (`id`, `pagenumber`, `name`, `usepagenum`, `pagetype`, `unrestricted`, `submenu`, `menuid`, `menutext`, `maxcolumns`, `autoextendtasks`) VALUES
+(58, 408, 'Stock Usage Report', 0, 3, 0, 4, 'stockusagereportoption', 'Usage Report', 0, 0);
+
+INSERT INTO `page_action` (`page_id`, `action_id`) VALUES
+(58, 1);
+
+INSERT INTO `menuitem` (`menucode`, `page_number`, `text`, `inactive`, `menu_number`, `is_public`) VALUES
+('10_8', '408', 'Usage Report', 0, 0, 0);
+
 -- =============================================================================
 -- After running this script:
 --   1. Log in as Admin — the Stock menu should now appear.

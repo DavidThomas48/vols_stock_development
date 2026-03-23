@@ -23,6 +23,7 @@ class ManagerCollection {
                                ,protected StockoutManager $stockoutmanager
                                ,protected StockLevelReportManager $stocklevelreportmanager
                                ,protected DamagedStockManager $damagedstockmanager
+                               ,protected StockUsageReportManager $stockusagereportmanager
                                ){
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>\n"; }
 	}
@@ -105,5 +106,9 @@ class ManagerCollection {
     public function DamagedStockManager() {
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
         return $this->damagedstockmanager;
+    }
+    public function StockUsageReportManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->stockusagereportmanager;
     }
 }

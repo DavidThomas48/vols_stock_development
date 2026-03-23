@@ -46,4 +46,23 @@ class StockMovementTable extends \fw\database\table\MySQLTable
         if ($this->trace || $trace) { echo 'Leave '.__METHOD__."  id={$id}<br>"; }
         return $success;
     }
+
+    public function getusagereport($from, $to, &$results, &$numrows, $trace=false) {
+        if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
+        $from = $this->real_escape_string($from);
+        $to   = $this->real_escape_string($to);
+        $query  = "SELECT s.id, s.Name, s.Code, sc.Name as category_name,";
+        $query .= " SUM(sm.qty) as total_used";
+        $query .= " FROM stock_movement sm";
+        $query .= " JOIN stock s ON sm.stock_id = s.id";
+        $query .= " LEFT JOIN stock_category sc ON s.category_id = sc.id";
+        $query .= " WHERE sm.movement_type = 'stockout'";
+        $query .= " AND sm.movement_date >= '{$from} 00:00:00'";
+        $query .= " AND sm.movement_date <= '{$to} 23:59:59'";
+        $query .= " GROUP BY s.id, s.Name, s.Code, sc.Name";
+        $query .= " ORDER BY sc.Name, s.Name";
+        $success = $this->query($query, $results, $numrows, $trace);
+        if ($this->trace || $trace) { echo 'Leave '.__METHOD__."  ({$numrows} rows)<br>"; }
+        return $success;
+    }
 }

@@ -204,6 +204,7 @@ class ViewController {
             case $c2v($mm::STOCKOUTPAGE)       : $this->setthispage(0,$this->pagenum,$this->mgrs->StockoutManager(),$this->forms->StockoutForm(),$errormessage,"",$trace);break;
             case $c2v($mm::STOCKLEVELREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockLevelReportManager(),$this->forms->StockLevelReportForm(),$errormessage,"",$trace);break;
             case $c2v($mm::DAMAGEDSTOCKPAGE)    : $this->setthispage(0,$this->pagenum,$this->mgrs->DamagedStockManager(),$this->forms->DamagedStockForm(),$errormessage,"",$trace);break;
+            case $c2v($mm::STOCKUSAGEREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockUsageReportManager(),$this->forms->StockUsageReportForm(),$errormessage,"",$trace);break;
             default: die(__METHOD__." Unknown pagenum : {$this->pagenum}");
         }
        if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
@@ -267,6 +268,7 @@ class ViewController {
             case $c2v($mm::STOCKOUTPAGE)          :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::STOCKLEVELREPORTPAGE)  :$success = $this->prepare_stocklevelreport_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::DAMAGEDSTOCKPAGE)      :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
+            case $c2v($mm::STOCKUSAGEREPORTPAGE) :$success = $this->prepare_stockusagereport_body($user_id,$errormessage,$trace); break;
             default                                         :$success = $this->prepare_std_body($user_id,$this->orderby,$errormessage,$trace);
         }
         if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
@@ -789,4 +791,34 @@ class ViewController {
         if ($this->trace || $trace) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
         return true;
      }
+    private function prepare_stockusagereport_body($user_id,&$errormessage,$trace=false) {
+        if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }
+        try {
+            $from = $this->requestdata['from'] ?? '';
+            $to   = $this->requestdata['to']   ?? '';
+            if ($from && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)) $from = '';
+            if ($to   && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to))   $to   = '';
+            $this->manager->setdaterange($from, $to);
+            $data    = [];
+            $parents = [];
+            $numrows = 0;
+            $success = $this->manager->getallrecords($data, '', $parents, $numrows, false, $trace);
+            if ($success) {
+                $parents['from'] = $from;
+                $parents['to']   = $to;
+                $this->form->init($this->session, $data, $parents, false);
+                $this->bodysection = $this->bodies->standardbody();
+                $this->bodysection->init($this->session, $this->form, "Stock Usage Report", "", $errormessage);
+            } else {
+                $errormessage = __METHOD__." failed to load usage data for page {$this->pagenum}";
+                return false;
+            }
+        } catch(\Exception $e) {
+            $errormessage = __METHOD__." : {$e->getCode()} {$e->getMessage()}";
+            if ($this->trace) { echo gtab(-1)."Leave ".__METHOD__."...<br>$errormessage<br>\n"; }
+            return false;
+        }
+        if ($this->trace || $trace) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
+        return true;
+    }
 }
