@@ -1,5 +1,2 @@
-===== START at 26-03-23 17:56:45 9bcq4a1dd3uc2654rdehh7rt7i
-INSERT INTO phpsession (user_id, phpsession, isadmin, starttime, last_access, client_ip, timezone, created) VALUES ('0', 'd729betdn0bukanphofamn6jk6', '', '26-03-23 17:56:45', '26-03-23 17:56:45', '::1', 'Australia/Melbourne', '26-03-23 17:56:45')
-INSERT INTO page_access (session_id, page_num, accesstime, notes, created) VALUES ('6797', '1', '', '', '26-03-23 17:56:45')
-===== START at 26-03-23 17:57:16 d729betdn0bukanphofamn6jk6
-===== START at 26-03-23 17:57:17 d729betdn0bukanphofamn6jk6
+===== START at 26-03-24 17:20:03 2cvo8sadjssvo8t1d904fb29r4
+===== START at 26-03-24 17:20:04 2cvo8sadjssvo8t1d904fb29r4
