@@ -2,7 +2,7 @@
 STOCK TRACKING SYSTEM — DEVELOPMENT REPORT
 Project: Woodend Neighbourhood House Food Bank Volunteer Rostering
 Date:    2026-03-23
-Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time; usage report; demo data)
+Updated: 2026-03-23 (CSV export; date format dd-mm-yyyy; filename includes time; usage report; demo data; bug fixes)
 ================================================================================
 
 
@@ -314,7 +314,19 @@ BUGS FIXED DURING DEVELOPMENT
    operations on the user table failed. Fixed by recreating the user table
    triggers and LogDML procedure with definer root@localhost.
 
-5. CSV export heading #NAME? error in Excel
+5. Usage report To date not inclusive
+   The date range query used datetime string comparisons
+   (movement_date <= 'yyyy-mm-dd 23:59:59') which could exclude records
+   on the To date depending on their stored time. Fixed by using
+   DATE(sm.movement_date) <= 'yyyy-mm-dd' so the time component is
+   stripped before comparison and all records on the To date are included.
+
+6. Seed script hardcoded stock IDs
+   tests/seed_movements.php used hardcoded stock item IDs (15, 16, 17)
+   which became stale after the tables were rebuilt. Fixed by looking up
+   IDs dynamically by Name at runtime.
+
+7. CSV export heading #NAME? error in Excel
    Column headings starting with +, -, or = were interpreted as formulas
    by Excel, showing #NAME? instead of the heading text. Fixed by renaming
    headers to: Deliveries In, Used, Damaged, Current Qty.
@@ -460,6 +472,9 @@ GIT COMMITS
   3092bad  Include time in CSV export filename: stock-levels-yyyymmdd-hhmm.csv
   da21c8b  Update development report: CSV export filename includes time
   1705ebd  Add seed script for stock movement demo data
+  c8dc82f  Update development report: demo data seed script and full commit history
+  786b595  Fix usage report date range: use DATE() comparison for inclusive To date
+  4868155  Fix seed script: look up stock IDs dynamically instead of hardcoding them
 
 
 ================================================================================
