@@ -63,6 +63,7 @@ class TaskForm extends \fw\view\form\StdCRUDForm {
         // Note the fieldnum parameter should equal the position of the field in the field array in the relevant table Class
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
         $parentdata = array_combine(array_column($this->parents,"id"),array_column($this->parents,"menutext"));
+        $parentdata = [NULL=>""] + $parentdata;
         $optn = [];
         // $button = '<div class="vols-tablecell vols-width-100 aligncenter"><div id="buildsessions" class="clickable action doitbg" style"height: auto">Build</div></div>';
         // $heading = '<div style="display:inline-grid;grid-template-columns:1fr 1fr;align-items:center;"><div style="margin-right:20px">Build sessions:  </div>'.$button.'</div>';

@@ -117,7 +117,11 @@ abstract class StdManager {
         $set = $comma = "";
         $fields = $this->preparetablefields();
         foreach ($fields as $fieldname => $default) {
-            $set .= $comma." `$fieldname` = '".$this->table->real_escape_string($data["$fieldname"]??$default)."'";
+            if (substr($fieldname,-3) == "_id" && $data["$fieldname"] == "" ) {
+                $set .= $comma." `$fieldname` = null";
+            } else {
+                $set .= $comma." `$fieldname` = '".$this->table->real_escape_string($data["$fieldname"]??$default)."'";
+            }
             $comma=",";
         }
         return $set;
