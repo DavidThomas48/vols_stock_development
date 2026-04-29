@@ -116,6 +116,78 @@ class RequestHandler   // extends \fw\http\RequestHandler
                             $thedata = explode(',',$this->requestdata["thedata"]);
                             $output = $this->sessionmanager->addclientsession($thedata[0],$thedata[1]);
                             break;
+                        case "stockevent_createevent":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d               = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $event_type      = $d["event_type"]      ?? '';
+                            $location1_id    = $d["location1_id"]    ?: null;
+                            $location2_id    = $d["location2_id"]    ?: null;
+                            $supplier_id     = $d["supplier_id"]     ?: null;
+                            $stock_client_id = $d["stock_client_id"] ?: null;
+                            $event_id        = 0;
+                            $errormsg        = '';
+                            $success = $this->manager->createevent($event_type, $location1_id, $location2_id, $supplier_id, $stock_client_id, $event_id, $errormsg);
+                            $output = json_encode(['success' => $success, 'event_id' => $event_id, 'error' => $errormsg]);
+                            break;
+                        case "stockevent_getinprogressevent":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d            = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $event_type   = $d["event_type"]   ?? '';
+                            $location1_id = $d["location1_id"] ?: null;
+                            $location2_id = $d["location2_id"] ?: null;
+                            $supplier_id  = $d["supplier_id"]  ?: null;
+                            $result       = [];
+                            $numrows      = 0;
+                            $success = $this->manager->getinprogressevent($event_type, $location1_id, $location2_id, $supplier_id, $result, $numrows);
+                            $output = json_encode(['success' => $success, 'found' => $numrows > 0, 'event' => $result]);
+                            break;
+                        case "stockevent_savemovement":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d           = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $stock_id    = $d["stock_id"]    ?? 0;
+                            $event_id    = $d["event_id"]    ?? 0;
+                            $location_id = $d["location_id"] ?? 0;
+                            $value       = $d["value"]       ?? 0;
+                            $event_type  = $d["event_type"]  ?? '';
+                            $movement_id = (int)($d["movement_id"] ?? 0);
+                            $errormsg    = '';
+                            $success = $this->manager->savemovement($stock_id, $event_id, $location_id, $value, $event_type, $movement_id, $errormsg);
+                            $output = json_encode(['success' => $success, 'movement_id' => $movement_id, 'error' => $errormsg]);
+                            break;
+                        case "stockevent_closeevent":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d        = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $event_id = $d["event_id"] ?? 0;
+                            $errormsg = '';
+                            $success  = $this->manager->closeevent($event_id, $errormsg);
+                            $output   = json_encode(['success' => $success, 'error' => $errormsg]);
+                            break;
+                        case "stockevent_cancelevent":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d        = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $event_id = $d["event_id"] ?? 0;
+                            $errormsg = '';
+                            $success  = $this->manager->cancelevent($event_id, $errormsg);
+                            $output   = json_encode(['success' => $success, 'error' => $errormsg]);
+                            break;
+                        case "stockevent_getstock":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d           = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $event_id    = $d["event_id"]    ?? 0;
+                            $category_id = $d["category_id"] ?? '';
+                            $supplier_id = $d["supplier_id"] ?? '';
+                            $results     = [];
+                            $numrows     = 0;
+                            $this->manager->getstockforevent($event_id, $category_id, $results, $numrows, $supplier_id);
+                            $this->viewcontroller->init($this->session, $this->managercollection, $this->errorhandler, $trace);
+                            $output = $this->viewcontroller->processajaxrequest("stockevent_getstock", $this->requestdata, $results, $errormessage, $trace);
+                            break;
                         default: $output = "Unknown request action: ".$action;
                     }
                 } else {

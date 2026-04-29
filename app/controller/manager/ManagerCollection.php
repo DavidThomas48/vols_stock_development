@@ -24,6 +24,9 @@ class ManagerCollection {
                                ,protected StockLevelReportManager $stocklevelreportmanager
                                ,protected DamagedStockManager $damagedstockmanager
                                ,protected StockUsageReportManager $stockusagereportmanager
+                               ,protected LocationManager $locationmanager
+                               ,protected StockSupplierManager $stocksuppliermanager
+                               ,protected StockEventManager $stockeventmanager
                                ){
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>\n"; }
 	}
@@ -110,5 +113,17 @@ class ManagerCollection {
     public function StockUsageReportManager() {
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
         return $this->stockusagereportmanager;
+    }
+    public function LocationManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->locationmanager;
+    }
+    public function StockSupplierManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->stocksuppliermanager;
+    }
+    public function StockEventManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->stockeventmanager;
     }
 }

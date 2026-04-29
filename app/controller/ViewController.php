@@ -94,6 +94,11 @@ class ViewController {
                     $this->form->init($this->session,[],"",false,[],[]);
                     $output = "<div id='attendancedata'>".$this->form->rendersessionreport($data,$formdata)."</div>"; 
                     break;
+            case "stockevent_getstock":
+                    $event_type = $formdata["event_type"] ?? '';
+                    $this->form = $this->getStockEventForm($event_type);
+                    $output = $this->form->renderstocktable($data);
+                    break;
             case "generatecsvreport":
                     foreach ($data as $row) {
                         foreach ($row as $field) {
@@ -205,6 +210,12 @@ class ViewController {
             case $c2v($mm::STOCKLEVELREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockLevelReportManager(),$this->forms->StockLevelReportForm(),$errormessage,"",$trace);break;
             case $c2v($mm::DAMAGEDSTOCKPAGE)    : $this->setthispage(0,$this->pagenum,$this->mgrs->DamagedStockManager(),$this->forms->DamagedStockForm(),$errormessage,"",$trace);break;
             case $c2v($mm::STOCKUSAGEREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockUsageReportManager(),$this->forms->StockUsageReportForm(),$errormessage,"",$trace);break;
+            case $c2v($mm::LOCATIONPAGE)        : $this->setthispage(0,$this->pagenum,$this->mgrs->LocationManager(),$this->forms->LocationForm(),$errormessage,"name",$trace);break;
+            case $c2v($mm::STOCKSUPPLIERPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockSupplierManager(),$this->forms->StockSupplierForm(),$errormessage,"name",$trace);break;
+            case $c2v($mm::STOCKTAKEEVENTPAGE)  : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->StocktakeEventForm(),$errormessage,"",$trace);break;
+            case $c2v($mm::DELIVERYEVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->DeliveryEventForm(),$errormessage,"",$trace);break;
+            case $c2v($mm::TRANSFEREVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->TransferEventForm(),$errormessage,"",$trace);break;
+            case $c2v($mm::ADJUSTMENTEVENTPAGE) : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->AdjustmentEventForm(),$errormessage,"",$trace);break;
             default: die(__METHOD__." Unknown pagenum : {$this->pagenum}");
         }
        if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
@@ -269,6 +280,10 @@ class ViewController {
             case $c2v($mm::STOCKLEVELREPORTPAGE)  :$success = $this->prepare_stocklevelreport_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::DAMAGEDSTOCKPAGE)      :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::STOCKUSAGEREPORTPAGE) :$success = $this->prepare_stockusagereport_body($user_id,$errormessage,$trace); break;
+            case $c2v($mm::STOCKTAKEEVENTPAGE)  :
+            case $c2v($mm::DELIVERYEVENTPAGE)   :
+            case $c2v($mm::TRANSFEREVENTPAGE)   :
+            case $c2v($mm::ADJUSTMENTEVENTPAGE) :$success = $this->prepare_stockevent_body($user_id,$errormessage,$trace); break;
             default                                         :$success = $this->prepare_std_body($user_id,$this->orderby,$errormessage,$trace);
         }
         if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
@@ -722,6 +737,77 @@ class ViewController {
         if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
         return true;
      }
+    private function prepare_stockevent_body($user_id, &$errormessage, $trace=false) {
+        if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }
+        try {
+            $locations = $suppliers = $categories = $parents = [];
+            $numrows   = 0;
+            $locmgr    = $this->mgrs->LocationManager();       $locmgr->init($this->session);
+            $supmgr    = $this->mgrs->StockSupplierManager();  $supmgr->init($this->session);
+            $catmgr    = $this->mgrs->StockCategoryManager();  $catmgr->init($this->session);
+            $locmgr->getallrecords($locations,  "name", $parents, $numrows, false, false);
+            $supmgr->getallrecords($suppliers,  "name", $parents, $numrows, false, false);
+            $catmgr->getallrecords($categories, "Name", $parents, $numrows, false, false);
+
+            // Enrich suppliers with in-progress delivery data so the delivery form
+            // can build "continue (date)" vs "New Delivery" options without an extra AJAX call.
+            $eventmgr = $this->mgrs->StockEventManager();
+            $eventmgr->init($this->session);
+            $deliveries  = [];
+            $del_numrows = 0;
+            $eventmgr->getallinprogressdeliveries($deliveries, $del_numrows);
+            $delivery_lookup = [];
+            foreach ($deliveries as $del) {
+                // Keep only the most recent in-progress delivery per supplier.
+                if (!isset($delivery_lookup[$del['supplier_id']])) {
+                    $delivery_lookup[$del['supplier_id']] = $del;
+                }
+            }
+            foreach ($suppliers as &$sup) {
+                if (isset($delivery_lookup[$sup['id']])) {
+                    $d = $delivery_lookup[$sup['id']];
+                    $sup['in_progress_event_id'] = $d['id'];
+                    $sup['in_progress_date']     = $d['date_created'];
+                } else {
+                    $sup['in_progress_event_id'] = 0;
+                    $sup['in_progress_date']     = '';
+                }
+            }
+            unset($sup);
+
+            // Enrich categories with the list of supplier IDs that supply each category,
+            // so the delivery form can filter the category dropdown by supplier.
+            $links     = [];
+            $lnk_rows  = 0;
+            $supmgr->getallcategorylinks($links, $lnk_rows);
+            $cat_sup_map = [];
+            foreach ($links as $link) {
+                $cat_sup_map[$link['stock_category_id']][] = $link['stock_supplier_id'];
+            }
+            foreach ($categories as &$cat) {
+                $cat['supplier_ids'] = $cat_sup_map[$cat['id']] ?? [];
+            }
+            unset($cat);
+
+            $this->form->init($this->session, $locations, $suppliers, $categories);
+            $this->bodysection = $this->bodies->standardbody();
+            $this->bodysection->init($this->session, $this->form, $this->form->getformname(), "", $errormessage);
+        } catch(\Exception $e) {
+            $errormessage = __METHOD__." Exception: ".$e->getMessage();
+            if ($this->trace) { echo gtab(-1)."Leave ".__METHOD__."...<br>$errormessage<br>\n"; }
+            return false;
+        }
+        if ($this->trace || $trace) { echo gtab(-1)."Leave ".__METHOD__."<br>"; }
+        return true;
+     }
+    private function getStockEventForm(string $event_type): \app\view\form\StockEventForm {
+        return match($event_type) {
+            'delivery'   => $this->forms->DeliveryEventForm(),
+            'transfer'   => $this->forms->TransferEventForm(),
+            'adjustment' => $this->forms->AdjustmentEventForm(),
+            default      => $this->forms->StocktakeEventForm(),
+        };
+     }
     private function prepare_stocktake_body($user_id,&$errormessage,$trace=false) {
         if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }
         try {
@@ -771,6 +857,9 @@ class ViewController {
     private function prepare_stocklevelreport_body($user_id,&$errormessage,$trace=false) {
         if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }
         try {
+            $location_id = $this->requestdata['location_id'] ?? '';
+            if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
+            $this->manager->setlocation($location_id);
             $data    = [];
             $parents = [];
             $numrows = 0;

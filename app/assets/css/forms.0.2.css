@@ -391,11 +391,15 @@ h2{
     margin-left:auto;
     max-width: 800px;
     scrollbar-gutter: stable both-edges;
-    height:auto;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow:hidden;
+    overflow-y: auto;
  }
+
+#footercontainer {
+    margin-top: auto;
+}
 
 
 .content_panel hidden {
@@ -811,6 +815,7 @@ h2{
     font-weight: 500;
     font-size:3rem;
     width: auto;
+    text-align: center;
  }
 .vols-form-headingmessage {
     color:var(--darkgrey);
@@ -1704,6 +1709,26 @@ input
     flex: 1;
 }
 
+.vols-stockreport-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+}
+
+.vols-stockreport-filter-label {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vols-stockreport-locselect {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    min-width: 160px;
+}
+
 .vols-stockreport-toolbar {
     display: flex;
     justify-content: flex-end;
@@ -1724,24 +1749,39 @@ input
     opacity: 0.85;
 }
 
-.vols-stockreport-table {
+.vols-stockreport-table-wrap {
+    overflow-x: auto;
     width: 100%;
+}
+
+.vols-stockreport-table {
+    /* Wide enough that all 9 columns always fit; scrolls horizontally if viewport is narrower */
+    min-width: 676px;
+    width: 100%;
+}
+.vols-stockreport-table--noloc {
+    /* 8 columns — no Last Stocktake date column in all-locations view */
+    min-width: 582px;
 }
 
 .vols-stockreport-colheadings,
 .vols-stockreport-row {
     display: grid;
-    /* name | code | stocktake date | st qty | deliveries | used | damaged | current */
-    grid-template-columns: 1fr 70px 100px 80px 80px 70px 80px 90px;
-    padding: 0.35rem 0.6rem;
+    /* name | code | st-date | st-qty | deliveries | transfers | adjustments | issues | current */
+    grid-template-columns: 1fr 52px 94px 62px 64px 62px 72px 58px 66px;
+    padding: 0.35rem 0.5rem;
     font-size: 0.9rem;
+}
+/* All-locations view: no st-date column */
+.vols-stockreport-table--noloc .vols-stockreport-colheadings,
+.vols-stockreport-table--noloc .vols-stockreport-row {
+    grid-template-columns: 1fr 52px 62px 64px 62px 72px 58px 66px;
 }
 
 .vols-stockreport-colheadings {
     font-weight: bold;
     font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    line-height: 1.25;
     color: #555;
     border-bottom: 2px solid var(--midgrey, #aaa);
     margin-bottom: 0.2rem;
@@ -1773,12 +1813,13 @@ input
 
 .vols-stockreport-col-num {
     text-align: right;
-    padding-right: 0.8rem;
+    padding-right: 0.4rem;
 }
 
-.vols-stockreport-deliv { color: var(--doitbg, #5c903a); }
-.vols-stockreport-used  { color: #c07a00; }
-.vols-stockreport-dmgd  { color: #b22222; }
+.vols-stockreport-deliv  { color: var(--doitbg, #5c903a); }
+.vols-stockreport-trans  { color: #1a6fa8; }
+.vols-stockreport-adj    { color: #7a4f9e; }
+.vols-stockreport-issues { color: #c07a00; }
 
 .vols-stockreport-qty {
     font-weight: bold;
@@ -1789,16 +1830,7 @@ input
 .vols-stockreport-qty-ok   { color: var(--doitbg, #5c903a); }
 .vols-stockreport-qty-zero { color: var(--volscolor4, #cc0000); }
 
-@media screen and (max-width: 750px) {
-    .vols-stockreport-colheadings,
-    .vols-stockreport-row {
-        grid-template-columns: 1fr 90px 80px 80px;
-    }
-    .vols-stockreport-col-code,
-    .vols-stockreport-col-stdate,
-    .vols-stockreport-used,
-    .vols-stockreport-dmgd   { display: none; }
-}
+/* Stock level report always shows all columns; .vols-stockreport-table-wrap scrolls horizontally on narrow viewports */
 
 /* Damaged stock header — dark red/burgundy tones */
 .vols-damaged-header {
@@ -1932,4 +1964,287 @@ input
 .vols-usagereport-col-name   { }
 .vols-usagereport-col-code   { color: #666; font-style: italic; }
 .vols-usagereport-col-num    { text-align: right; padding-right: 0.8rem; }
+
+/* ============================================================
+   Stock event pages (stocktake, delivery, transfer, adjustment)
+   ============================================================ */
+
+/* Action buttons used by stock event pages */
+.vols-button {
+    display: inline-block;
+    padding: 0.6rem 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #fff;
+    background-color: var(--doitbg, #5c903a);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    line-height: 1.4;
+}
+.vols-button:hover {
+    background-color: var(--doitbghover, #6ca04a);
+}
+.vols-button.vols-button-danger {
+    background-color: var(--dangerbg, #e2001a);
+}
+.vols-button.vols-button-danger:hover {
+    background-color: var(--dangerbghover, #ec0038);
+}
+
+/* Banner header strip */
+.se-event-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: 4px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+.se-event-header-delivery {
+    background-color: #e8f5e2;
+    border-left: 4px solid var(--doitbg, #5c903a);
+    color: #3a5e24;
+}
+.se-event-header-stocktake {
+    background-color: #f0eafa;
+    border-left: 4px solid #7c4dbb;
+    color: #4a2a7a;
+}
+.se-event-header-transfer {
+    background-color: #e3f2fd;
+    border-left: 4px solid #1565c0;
+    color: #0d47a1;
+}
+.se-event-header-adjustment {
+    background-color: #fff8e1;
+    border-left: 4px solid #f57f17;
+    color: #e65100;
+}
+.se-event-header-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.se-event-header-text {
+    flex: 1;
+}
+
+/* Event definition section (location/supplier selects + Start button) */
+.se-event-def {
+    margin-bottom: 1rem;
+}
+.se-event-def-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+    font-size: 1.4rem;
+}
+.se-event-def-row label {
+    min-width: 16rem;
+    font-weight: 500;
+}
+.se-location-select,
+.se-event-def select {
+    font-size: 1.4rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    min-width: 18rem;
+}
+.se-start-area {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.8rem;
+    padding: 0.5rem 0;
+}
+.se-status-msg {
+    font-size: 1.3rem;
+    color: #555;
+    font-style: italic;
+}
+
+/* Category filter */
+.se-category-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.4rem;
+}
+.se-category-filter label {
+    font-weight: 500;
+}
+.se-category-filter select {
+    font-size: 1.4rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+}
+
+/* Stock table */
+.se-stock-table-container {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+.se-stock-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.4rem;
+}
+.se-stock-table thead th {
+    text-align: left;
+    padding: 0.5rem 0.6rem;
+    background-color: var(--volscolor2, #cadee2);
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--midgrey, #555);
+    border-bottom: 2px solid #aaa;
+}
+.se-th-qty {
+    text-align: right;
+}
+.se-category-heading td {
+    background-color: var(--volscolor1, #ecebd5);
+    font-weight: bold;
+    padding: 0.4rem 0.6rem;
+    font-size: 1.3rem;
+}
+.se-stock-row {
+    border-bottom: 1px solid var(--lightgrey, #e0e0e0);
+}
+.se-stock-row:hover {
+    background-color: var(--neutralbg, rgba(202,222,226,0.5));
+}
+.se-stock-row.se-saved {
+    background-color: #d4f0c0;
+    transition: background-color 0.8s ease-out;
+}
+.se-td-name {
+    padding: 0.4rem 0.6rem;
+}
+.se-td-category {
+    padding: 0.4rem 0.6rem;
+    color: #777;
+    font-style: italic;
+    font-size: 1.2rem;
+}
+.se-td-qty {
+    padding: 0.4rem 0.6rem;
+    text-align: right;
+}
+.se-qty {
+    width: 7rem;
+    text-align: right;
+    font-size: 1.5rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+.se-qty:focus {
+    border-color: var(--doitbg, #5c903a);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(92, 144, 58, 0.2);
+}
+.se-empty,
+.se-loading {
+    text-align: center;
+    padding: 1.5rem;
+    color: #888;
+    font-style: italic;
+    font-size: 1.3rem;
+}
+
+/* Digit pad */
+.se-digitpad {
+    margin: 1rem 0;
+    max-width: 24rem;
+}
+.se-pad-display {
+    margin-bottom: 0.5rem;
+}
+.se-pad-display input {
+    width: 100%;
+    font-size: 2rem;
+    text-align: right;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+}
+.se-pad-keys {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+}
+.se-digit-btn {
+    font-size: 1.8rem;
+    font-weight: 500;
+    padding: 0.7rem 0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+.se-digit-btn:hover,
+.se-digit-btn:active {
+    background-color: var(--neutralbghover, #d4e8ec);
+}
+.se-digit-clear {
+    background-color: #fff4e0;
+    color: #7a4e00;
+    border-color: #c07a00;
+}
+.se-digit-clear:hover {
+    background-color: #ffe8b0;
+}
+.se-digit-back {
+    background-color: #fdecea;
+    color: #7a1a1a;
+    border-color: #c04040;
+}
+.se-digit-back:hover {
+    background-color: #f8d0cc;
+}
+
+/* Action buttons */
+.se-action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--lightgrey, #e0e0e0);
+    flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .se-event-def-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+    .se-event-def-row label {
+        min-width: unset;
+    }
+    .se-location-select,
+    .se-event-def select {
+        min-width: unset;
+        width: 100%;
+    }
+    .se-digitpad {
+        max-width: 100%;
+    }
+}
 .vols-usagereport-qty        { font-weight: bold; color: #c07a00; }

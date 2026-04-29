@@ -4,7 +4,7 @@ use \lib\StdLib as lib;
 class HTMLHead extends \fw\view\head\HTMLHead
 {
     private $trace = false;
-    private $ajaxurl = "https://vols.woodendnh.org.au/"; 
+    private $ajaxurl = "";
     private $pagenum = 0;
     private $targetpage = 0;
     private $session;
@@ -16,8 +16,9 @@ class HTMLHead extends \fw\view\head\HTMLHead
     public function init($session,$i="",$targetpage="") {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
         $this->session = $session;
-        $this->targetpage = $targetpage; 
+        $this->targetpage = $targetpage;
         $this->config = $session->getconfig();
+        $this->ajaxurl = $this->config["app"]["SITEURL"] ?? '';
      }
     public function __destruct() {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
