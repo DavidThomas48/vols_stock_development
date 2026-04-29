@@ -860,6 +860,9 @@ class ViewController {
             $location_id = $this->requestdata['location_id'] ?? '';
             if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
             $this->manager->setlocation($location_id);
+            $as_at_raw = $this->requestdata['as_at'] ?? '';
+            if ($as_at_raw && !preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $as_at_raw)) $as_at_raw = '';
+            $this->manager->setasat($as_at_raw ? str_replace('T', ' ', $as_at_raw) . ':00' : '');
             $data    = [];
             $parents = [];
             $numrows = 0;

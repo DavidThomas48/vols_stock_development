@@ -46,13 +46,33 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
     public function buildinputs($rights=[], $trace=false) {
         $locations   = $this->parents['locations']   ?? [];
         $location_id = $this->parents['location_id'] ?? '';
-        $loc_name    = '';
+        $as_at_mysql = $this->parents['as_at']       ?? '';   // 'YYYY-MM-DD HH:MM:SS' or ''
+        $as_at_html5 = $as_at_mysql
+            ? substr(str_replace(' ', 'T', $as_at_mysql), 0, 16)  // 'YYYY-MM-DDTHH:MM'
+            : '';
+        $as_at_disp  = '';
+        if ($as_at_html5) {
+            $dt = \DateTime::createFromFormat('Y-m-d\TH:i', $as_at_html5);
+            $as_at_disp = $dt ? $dt->format('d-m-Y H:i') : $as_at_html5;
+        }
+
+        $loc_name = '';
         foreach ($locations as $loc) {
             if ((string)$loc['id'] === (string)$location_id) { $loc_name = $loc['name']; break; }
         }
-        $header_text = $location_id
-            ? 'Current stock levels at <strong>' . htmlspecialchars($loc_name) . '</strong>. Each row shows the last stocktake at that location as the baseline.'
-            : 'Current stock levels across all locations. Each row shows the last stocktake as the baseline, then deliveries added and stock used or damaged since that date.';
+
+        $loc_phrase = $location_id
+            ? 'at <strong>' . htmlspecialchars($loc_name) . '</strong>'
+            : 'across all locations';
+        $time_phrase = $as_at_disp
+            ? 'as at <strong>' . htmlspecialchars($as_at_disp) . '</strong>'
+            : 'as at the current time';
+        $header_text = 'Stock levels ' . $loc_phrase . ', ' . $time_phrase . '.';
+        if (!$as_at_disp) {
+            $header_text .= $location_id
+                ? ' Each row shows the last stocktake at that location as the baseline.'
+                : ' Each row shows the last stocktake per location as the baseline.';
+        }
 
         $formfields  = '<div class="vols-stockreport-header">';
         $formfields .= '<span class="vols-stockreport-icon">&#128202;</span>';
@@ -71,6 +91,16 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
         $formfields .= '</select>';
         $formfields .= '</div>';
 
+        $formfields .= '<div class="vols-stockreport-filter">';
+        $formfields .= '<label class="vols-stockreport-filter-label" for="as_at">As at:</label>';
+        $formfields .= '<input type="datetime-local" id="as_at" name="as_at"'
+                     . ' class="vols-stockreport-asat"'
+                     . ($as_at_html5 ? ' value="' . htmlspecialchars($as_at_html5) . '"' : '')
+                     . ' onchange="this.form.submit()">';
+        $formfields .= '<button type="button" class="vols-stockreport-filter-clear"'
+                     . ' onclick="resetAsAtToNow()">Now</button>';
+        $formfields .= '</div>';
+
         // Build JS data array for CSV export
         $jsrows = [];
         foreach ($this->alldata as $item) {
@@ -87,8 +117,11 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
                 'current'  => (float)($item['current_qty']       ?? 0),
             ]);
         }
-        $loc_js = json_encode($loc_name ?: 'all-locations');
-        $formfields .= '<script>var stockReportData=[' . implode(',', $jsrows) . '];var stockReportLocation=' . $loc_js . ';</script>';
+        $loc_js   = json_encode($loc_name ?: 'all-locations');
+        $as_at_js = json_encode($as_at_disp ?: '');
+        $formfields .= '<script>var stockReportData=[' . implode(',', $jsrows) . '];'
+                     . 'var stockReportLocation=' . $loc_js . ';'
+                     . 'var stockReportAsAt=' . $as_at_js . ';</script>';
 
         $formfields .= '<div class="vols-stockreport-toolbar">';
         $formfields .= '<button type="button" class="vols-stockreport-csvbtn" onclick="downloadStockCSV()">&#8681; Export CSV</button>';
@@ -154,6 +187,19 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
     public function formscript() {
         return "function formhaserrors() { return 0; }\n"
              . "function displayselectedrecord() {}\n"
+             . "(function() {\n"
+             . "    var el = document.getElementById('as_at');\n"
+             . "    if (el && !el.value) {\n"
+             . "        var d = new Date();\n"
+             . "        var pad = function(n) { return String(n).padStart(2,'0'); };\n"
+             . "        el.value = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())\n"
+             . "                 + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());\n"
+             . "    }\n"
+             . "})();\n"
+             . "function resetAsAtToNow() {\n"
+             . "    document.getElementById('as_at').value = '';\n"
+             . "    document.getElementById('as_at').form.submit();\n"
+             . "}\n"
              . "function downloadStockCSV() {\n"
              . "    var rows = [['Category','Item','Code','Last Stocktake','Stocktake Qty','Deliveries','Transfers','Adjustments','Issues','Current Qty']];\n"
              . "    for (var i = 0; i < stockReportData.length; i++) {\n"
@@ -173,7 +219,8 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
              . "    var pad = function(n){return String(n).padStart(2,'0');};\n"
              . "    var ts = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());\n"
              . "    var locSlug = stockReportLocation.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');\n"
-             . "    a.download = 'stock-levels-' + locSlug + '-' + ts + '.csv';\n"
+             . "    var asAtSlug = stockReportAsAt ? '-asat-' + stockReportAsAt.replace(/[^0-9]+/g,'-').replace(/-$/,'') : '';\n"
+             . "    a.download = 'stock-levels-' + locSlug + asAtSlug + '-' + ts + '.csv';\n"
              . "    a.click();\n"
              . "    URL.revokeObjectURL(a.href);\n"
              . "}\n";
