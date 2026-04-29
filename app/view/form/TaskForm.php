@@ -83,7 +83,8 @@ class TaskForm extends \fw\view\form\StdCRUDForm {
         $formfields .= $this->component->buildinputrow("groupindex",29,"",'Group position','',3,3,false,'','The position of this Task in its Task Group (1,2,...).');
         $formfields .= $this->component->buildinputrow("cellsperrow",30,"",'Cells per row','',3,3,false,'','The number of Volunteer cells to display per row in the Roster page (max 6). This impacts the width of the task. If more Volunteers are required per session, the sessions will contain multiple rows of Volunteer cells, as required.');
         $formfields .= $this->component->buildinputrow("sessiondepth",31,"",'Session per page','',3,3,false,'','This determines how many sessions will be displayed for the parent task per roster page?');
-
+        $formfields .="  <input type='hidden' name='logattendance' data-fnum='34' id='logattendance'  value='' />\n";// JUST HERE TO MAINTAIN THE VALUE
+        
         // ======================================recurrence section
         $formfields .= $this->component->rendersectionheading("Recurrence",inputgroup:"recurrencegroup");
         $fromdate = $this->component->renderdateinput("startdate",'','','','','',false,'',"",26,false,false,false); 

@@ -7,8 +7,6 @@ class StockoutManager extends \fw\controller\manager\StdManager
     protected $name = "Stock Usage";
     protected $db;
     protected $linkedobject = "";
-    protected $movement_type = "stockout";
-
     public function __construct(protected \apptable\StockMovementTable $table,
                                 protected \apptable\StockTable         $stocktable) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
@@ -21,7 +19,7 @@ class StockoutManager extends \fw\controller\manager\StdManager
 
     public function getallrecords(&$datafields, $orderby, &$parents, &$numrows, $withlock=false, $trace=false) {
         if ($this->trace || $trace) { echo "Enter ".__METHOD__."<br>"; }
-        $success = $this->table->getmovementsbytype($this->movement_type, $datafields, $numrows, $trace);
+        $success = $this->table->getmovementsbyeventtype('issue', $datafields, $numrows, $trace);
         $this->alldata = $datafields;
         $this->makenames($trace);
         $success = $success && $this->getparents($parents, $trace);
@@ -45,7 +43,6 @@ class StockoutManager extends \fw\controller\manager\StdManager
     }
 
     protected function setdefaults(&$fields, $trace=false) {
-        $fields["movement_type"] = $this->movement_type;
         $fields["movement_date"] = date('Y-m-d H:i:s');
         $fields["unit_qty"]      = $fields["unit_qty"] ?: 1;
     }

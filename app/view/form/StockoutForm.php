@@ -25,11 +25,9 @@ class StockoutForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function initfields() {
-        // Fields must match the order returned by getmovementsbytype JOIN query
         $this->fields = array(
             "id"            => "",
             "stock_id"      => "",
-            "movement_type" => "",
             "qty"           => "",
             "unit"          => "",
             "unit_qty"      => "1",
@@ -50,9 +48,7 @@ class StockoutForm extends \fw\view\form\StdCRUDForm {
         );
         $optn = [];
 
-        // Hidden fields set automatically on save
-        $formfields  = '<input type="hidden" name="movement_type" id="movement_type" value="stockout" />'."\n";
-        $formfields .= '<input type="hidden" name="movement_date" id="movement_date" value="" />'."\n";
+        $formfields  = '<input type="hidden" name="movement_date" id="movement_date" value="" />'."\n";
         $formfields .= '<input type="hidden" name="stock_name"    id="stock_name"    value="" />'."\n";
 
         $formfields .= '<div class="vols-movement-header vols-stockout-header">';

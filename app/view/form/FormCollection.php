@@ -31,6 +31,12 @@ class FormCollection {
                                 ,protected StockLevelReportForm $stocklevelreportform
                                 ,protected DamagedStockForm $damagedstockform
                                 ,protected StockUsageReportForm $stockusagereportform
+                                ,protected LocationForm $locationform
+                                ,protected StockSupplierForm $stocksupplierform
+                               ,protected StocktakeEventForm $stocktakeeventform
+                               ,protected DeliveryEventForm $deliveryeventform
+                               ,protected TransferEventForm $transfereventform
+                               ,protected AdjustmentEventForm $adjustmenteventform
                                 // ,protected SessionListForm $SessionList
                             ){
         if ($this->trace ) { echo "Enter ".__METHOD__."<br>\n"; }
@@ -118,5 +124,23 @@ class FormCollection {
     }
     public function StockUsageReportForm() {
         return $this->stockusagereportform;
+    }
+    public function LocationForm() {
+        return $this->locationform;
+    }
+    public function StockSupplierForm() {
+        return $this->stocksupplierform;
+    }
+    public function StocktakeEventForm() {
+        return $this->stocktakeeventform;
+    }
+    public function DeliveryEventForm() {
+        return $this->deliveryeventform;
+    }
+    public function TransferEventForm() {
+        return $this->transfereventform;
+    }
+    public function AdjustmentEventForm() {
+        return $this->adjustmenteventform;
     }
 }
