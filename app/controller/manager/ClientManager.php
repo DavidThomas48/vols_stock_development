@@ -324,7 +324,7 @@ class ClientManager extends \fw\controller\manager\StdManager
                                         FROM client AS c
                                         JOIN client_session cs ON cs.client_id = c.id 
                                         JOIN session s ON cs.session_id = s.id 
-                                        WHERE s.start > SUBDATE(CURRENT_DATE(),INTERVAL 1 MONTH) AND s.start < CURRENT_DATE())
+                                        WHERE s.start >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') AND s.start < DATE_FORMAT(CURDATE(), '%Y-%m-01'))
                         GROUP BY c.id
                         ) as SQL1
 
@@ -352,7 +352,7 @@ class ClientManager extends \fw\controller\manager\StdManager
                                         FROM client AS c
                                         JOIN client_session cs ON cs.client_id = c.id 
                                         JOIN session s ON cs.session_id = s.id 
-                                        WHERE s.start > SUBDATE(CURRENT_DATE(),INTERVAL 3 MONTH) AND s.start < CURRENT_DATE())
+                                        WHERE s.start >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 3 MONTH), '%Y-%m-01') AND s.start < DATE_FORMAT(CURDATE(), '%Y-%m-01'))
                         GROUP BY c.id
                         ) as SQL2
  
@@ -380,9 +380,37 @@ class ClientManager extends \fw\controller\manager\StdManager
                                         FROM client AS c
                                         JOIN client_session cs ON cs.client_id = c.id 
                                         JOIN session s ON cs.session_id = s.id 
-                                        WHERE s.start > SUBDATE(CURRENT_DATE(),INTERVAL 12 MONTH) AND s.start < CURRENT_DATE())
+                                        WHERE s.start >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 12 MONTH), '%Y-%m-01') AND s.start < DATE_FORMAT(CURDATE(), '%Y-%m-01'))
                         GROUP BY c.id
                         ) as SQL3
+
+                    UNION
+
+                    SELECT "CURRENT MONTH",
+                            COUNT(clientid) as clients,
+                            IFNULL(sum(household + 1),0) as population,
+                            SUM(memberischild) + clientischild AS children
+                    FROM (SELECT
+                            DISTINCT c.id as clientid,
+                            sum(CASE WHEN cm.id IS NOT NULL THEN 1 ELSE 0 END) as household,
+                            CASE WHEN (c.year_of_birth > 0 and c.month_of_birth > 0) THEN
+                                    CASE WHEN TIMESTAMPDIFF(MONTH, date(CONCAT(c.year_of_birth,"-",c.month_of_birth,"-01")), CURDATE()) < (18*12)  THEN 1
+                                    ELSE 0 END
+                            ELSE 0 END AS clientischild,
+                            sum(CASE WHEN (cm.id IS NOT NULL AND cm.year_of_birth > 0 AND cm.month_of_birth > 0) THEN
+                                    (CASE WHEN TIMESTAMPDIFF(MONTH, date(CONCAT(cm.year_of_birth,"-",cm.month_of_birth,"-01")), CURDATE()) < (18*12)  THEN 1
+                                     ELSE 0 END)
+                                ELSE 0 END) AS memberischild
+                        FROM client AS c
+                        LEFT OUTER JOIN client_member cm ON cm.client_id = c.id
+                        WHERE c.id IN (
+                                        SELECT DISTINCT c.id
+                                        FROM client AS c
+                                        JOIN client_session cs ON cs.client_id = c.id
+                                        JOIN session s ON cs.session_id = s.id
+                                        WHERE s.start >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND s.start < CURRENT_DATE())
+                        GROUP BY c.id
+                        ) as SQL4
             SQL;
         // $query .= " ORDER BY cs.client_id, sessiondate";
         // lib::pr($query);

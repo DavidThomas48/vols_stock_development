@@ -1850,6 +1850,35 @@ input
 
 /* Stock level report always shows all columns; .vols-stockreport-table-wrap scrolls horizontally on narrow viewports */
 
+/* Report type selector — rendered in #headercontainer subheading */
+#reporttypeform {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.2rem 0;
+}
+.vols-stockreport-reportselect {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+/* Stocktake Variance report: name | code | stqty | level | variance */
+.vols-variancereport-table {
+    min-width: 400px;
+}
+.vols-variancereport-table .vols-stockreport-colheadings,
+.vols-variancereport-table .vols-stockreport-row {
+    grid-template-columns: 1fr 52px 72px 72px 72px;
+}
+
+/* Variance cell colours */
+.vols-variance-pos  { color: var(--doitbg, #5c903a); font-weight: 600; }
+.vols-variance-neg  { color: var(--volscolor4, #cc0000); font-weight: 600; }
+.vols-variance-zero { color: #888; }
+
 /* Damaged stock header — dark red/burgundy tones */
 .vols-damaged-header {
     background-color: #fde8e8;

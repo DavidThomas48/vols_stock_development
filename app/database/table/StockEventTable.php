@@ -102,6 +102,21 @@ class StockEventTable extends \fw\database\table\MySQLTable
         return $success;
     }
 
+    // Returns all closed stocktake events for a given location, newest first.
+    public function getclosedstocktakesforlocation($location_id, &$results, &$numrows, $trace=false) {
+        if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
+        $lid    = $this->real_escape_string($location_id);
+        $query  = "SELECT se.id, se.date_created";
+        $query .= " FROM stock_event se";
+        $query .= " WHERE se.event = 'stocktake'";
+        $query .= " AND se.status = 'closed'";
+        $query .= " AND se.location1_id = '{$lid}'";
+        $query .= " ORDER BY se.date_created DESC";
+        $success = $this->query($query, $results, $numrows, $trace);
+        if ($this->trace || $trace) { echo 'Leave '.__METHOD__."  ({$numrows} rows)<br>"; }
+        return $success;
+    }
+
     // Checks whether any stocktake event currently has status 'in progress'.
     // Used to enforce the single-active-stocktake business rule.
     public function hasinprogressstocktake(&$numrows, $trace=false) {

@@ -62,7 +62,10 @@ class TransferEventForm extends StockEventForm {
 
 // ---- TransferEventForm-specific JS ----
 (function() {
+    var sameLocTimer = null;
+
     function checktransferselections() {
+        clearTimeout(sameLocTimer);
         var loc1 = jQuery('#se-location1').val();
         var loc2 = jQuery('#se-location2').val();
         jQuery('#se-start-area').hide();
@@ -71,8 +74,12 @@ class TransferEventForm extends StockEventForm {
         jQuery('#se-location-id').val('');
         if (!loc1 || !loc2) return;
         if (loc1 === loc2) {
-            alert('From and To locations must be different.');
-            jQuery('#se-location2').val('');
+            sameLocTimer = setTimeout(function() {
+                if (jQuery('#se-location1').val() === jQuery('#se-location2').val()) {
+                    alert('From and To locations must be different.');
+                    jQuery('#se-location2').val('');
+                }
+            }, 500);
             return;
         }
 
@@ -96,10 +103,16 @@ class TransferEventForm extends StockEventForm {
     jQuery(document).on('change', '#se-location1, #se-location2', checktransferselections);
 
     jQuery('#se-start-btn').on('click', function() {
+        clearTimeout(sameLocTimer);
         var loc1 = jQuery('#se-location1').val();
         var loc2 = jQuery('#se-location2').val();
         if (!loc1) { alert('Please select a From location.'); return; }
         if (!loc2) { alert('Please select a To location.'); return; }
+        if (loc1 === loc2) {
+            alert('From and To locations must be different.');
+            jQuery('#se-location2').val('');
+            return;
+        }
 
         var existing_id = parseInt(jQuery('#se-event-id').val() || '0');
         if (existing_id > 0) {

@@ -857,22 +857,55 @@ class ViewController {
     private function prepare_stocklevelreport_body($user_id,&$errormessage,$trace=false) {
         if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }
         try {
-            $location_id = $this->requestdata['location_id'] ?? '';
-            if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
-            $this->manager->setlocation($location_id);
-            $as_at_raw = $this->requestdata['as_at'] ?? '';
-            if ($as_at_raw && !preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $as_at_raw)) $as_at_raw = '';
-            $this->manager->setasat($as_at_raw ? str_replace('T', ' ', $as_at_raw) . ':00' : '');
+            $report_type = $this->requestdata['report_type'] ?? 'stocklevels';
+            if (!in_array($report_type, ['stocklevels', 'stocktakevariance', 'usagereport'])) $report_type = 'stocklevels';
+
+            if ($report_type === 'usagereport') {
+                $this->manager = $this->mgrs->StockUsageReportManager();
+                $this->manager->init($this->session, $trace);
+                $this->form = $this->forms->StockUsageReportForm();
+
+                $location_id = $this->requestdata['location_id'] ?? '';
+                if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
+                $this->manager->setlocation($location_id);
+
+                $from = $this->requestdata['from'] ?? '';
+                $to   = $this->requestdata['to']   ?? '';
+                if ($from && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)) $from = '';
+                if ($to   && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to))   $to   = '';
+                $this->manager->setdaterange($from, $to);
+            } elseif ($report_type === 'stocktakevariance') {
+                $this->manager = $this->mgrs->StocktakeVarianceReportManager();
+                $this->manager->init($this->session, $trace);
+                $this->form = $this->forms->StocktakeVarianceReportForm();
+
+                $location_id = $this->requestdata['location_id'] ?? '';
+                if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
+                $this->manager->setlocation($location_id);
+
+                $event_id = $this->requestdata['event_id'] ?? '';
+                if (!preg_match('/^\d*$/', $event_id)) $event_id = '';
+                $this->manager->setevent($event_id);
+            } else {
+                $location_id = $this->requestdata['location_id'] ?? '';
+                if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
+                $this->manager->setlocation($location_id);
+                $as_at_raw = $this->requestdata['as_at'] ?? '';
+                if ($as_at_raw && !preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $as_at_raw)) $as_at_raw = '';
+                $this->manager->setasat($as_at_raw ? str_replace('T', ' ', $as_at_raw) . ':00' : '');
+            }
+
             $data    = [];
             $parents = [];
             $numrows = 0;
-            $success = $this->manager->getallrecords($data,"",$parents,$numrows,false,$trace);
+            $success = $this->manager->getallrecords($data, "", $parents, $numrows, false, $trace);
             if ($success) {
-                $this->form->init($this->session,$data,$parents,false);
+                $parents['report_type'] = $report_type;
+                $this->form->init($this->session, $data, $parents, false);
                 $this->bodysection = $this->bodies->standardbody();
-                $this->bodysection->init($this->session,$this->form,"Stock Level Report","",$errormessage);
+                $this->bodysection->init($this->session, $this->form, "Stock Reports", "", $errormessage);
             } else {
-                $errormessage = __METHOD__." failed to load stock levels for page {$this->pagenum}";
+                $errormessage = __METHOD__." failed to load stock report for page {$this->pagenum}";
                 return false;
             }
         } catch(\Exception $e) {

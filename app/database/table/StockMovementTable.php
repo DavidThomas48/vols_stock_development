@@ -173,7 +173,7 @@ class StockMovementTable extends \fw\database\table\MySQLTable
         return $success;
     }
 
-    public function getusagereport($from, $to, &$results, &$numrows, $trace=false) {
+    public function getusagereport($from, $to, &$results, &$numrows, $location_id='', $trace=false) {
         if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
         $from = $this->real_escape_string($from);
         $to   = $this->real_escape_string($to);
@@ -186,6 +186,10 @@ class StockMovementTable extends \fw\database\table\MySQLTable
         $query .= " WHERE se.event = 'issue' AND se.status = 'closed'";
         $query .= " AND DATE(sm.movement_date) >= '{$from}'";
         $query .= " AND DATE(sm.movement_date) <= '{$to}'";
+        if (!empty($location_id)) {
+            $lid    = $this->real_escape_string($location_id);
+            $query .= " AND sm.location_id = '{$lid}'";
+        }
         $query .= " GROUP BY s.id, s.Name, s.Code, sc.Name";
         $query .= " ORDER BY sc.Name, s.Name";
         $success = $this->query($query, $results, $numrows, $trace);

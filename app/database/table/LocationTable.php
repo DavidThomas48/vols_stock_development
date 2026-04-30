@@ -8,8 +8,9 @@ class LocationTable extends \fw\database\table\MySQLTable
         if ($this->trace) { echo 'Enter '.__METHOD__.'<br>'; }
         parent::init($db, $user_id);
         $this->fields = array(
-            "id"   => "",
-            "name" => "",
+            "id"                  => "",
+            "name"                => "",
+            "uncontrolled_issues" => "",
         );
         if ($this->trace) { echo 'Leave '.__METHOD__.'<br>'; }
     }
