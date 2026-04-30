@@ -37,13 +37,38 @@ class StockUsageReportForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function buildinputs($rights=[], $trace=false) {
-        $from_val = (!empty($this->parents['from'])) ? $this->parents['from'] : date('Y-m-d', strtotime('-30 days'));
-        $to_val   = (!empty($this->parents['to']))   ? $this->parents['to']   : date('Y-m-d');
-        $queried  = !empty($this->parents['from']) && !empty($this->parents['to']);
+        $locations   = $this->parents['locations']   ?? [];
+        $location_id = $this->parents['location_id'] ?? '';
+        $from_val    = (!empty($this->parents['from'])) ? $this->parents['from'] : date('Y-m-d', strtotime('-30 days'));
+        $to_val      = (!empty($this->parents['to']))   ? $this->parents['to']   : date('Y-m-d');
+        $queried     = !empty($this->parents['from']) && !empty($this->parents['to']);
+
+        $this->component->setheadingoverride("Stock Reports");
+        $rtype  = '<form id="reporttypeform" method="POST">';
+        $rtype .= '<input type="hidden" name="p" value="' . (int)$this->pagenum . '">';
+        $rtype .= '<label class="vols-stockreport-filter-label">Report:</label>';
+        $rtype .= '<select name="report_type" class="vols-stockreport-reportselect" onchange="this.form.submit()">';
+        $rtype .= '<option value="stocklevels">Stock Levels</option>';
+        $rtype .= '<option value="stocktakevariance">Stocktake Variance</option>';
+        $rtype .= '<option value="usagereport" selected>Usage Report</option>';
+        $rtype .= '</select>';
+        $rtype .= '</form>';
 
         $formfields  = '<div class="vols-usagereport-header">';
         $formfields .= '<span class="vols-usagereport-icon">&#128200;</span>';
-        $formfields .= '<span class="vols-usagereport-headertext">Stock usage report. Select a date range and click Generate to see quantities used within that period.</span>';
+        $formfields .= '<span class="vols-usagereport-headertext">Stock usage report. Select a location and date range, then click Generate.</span>';
+        $formfields .= '</div>';
+
+        $formfields .= '<div class="vols-stockreport-filter">';
+        $formfields .= '<label class="vols-stockreport-filter-label" for="location_id">Location:</label>';
+        $formfields .= '<select id="location_id" name="location_id" class="vols-stockreport-locselect" onchange="this.form.submit()">';
+        $formfields .= '<option value="">All locations</option>';
+        foreach ($locations as $loc) {
+            $sel = ((string)$loc['id'] === (string)$location_id) ? ' selected' : '';
+            $formfields .= '<option value="' . (int)$loc['id'] . '"' . $sel . '>'
+                         . htmlspecialchars($loc['name']) . '</option>';
+        }
+        $formfields .= '</select>';
         $formfields .= '</div>';
 
         $formfields .= '<div class="vols-usagereport-filter">';
@@ -108,7 +133,7 @@ class StockUsageReportForm extends \fw\view\form\StdCRUDForm {
             }
         }
 
-        $this->preparecommontop(true, true, '', '');
+        $this->preparecommontop(true, true, '<input type="hidden" name="report_type" value="usagereport">', '', false, $rtype);
         return $formfields;
     }
 

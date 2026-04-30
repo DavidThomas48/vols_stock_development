@@ -24,8 +24,9 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
 
     public function initfields() {
         $this->fields = array(
-            "id"   => "",
-            "name" => "",
+            "id"                  => "",
+            "name"                => "",
+            "uncontrolled_issues" => "",
         );
     }
 
@@ -39,6 +40,8 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
         $formfields .= '<span class="vols-stockmaint-text">Manage locations. Add, edit or delete the physical locations used in stock events.</span>';
         $formfields .= '</div>';
         $formfields .= $this->component->buildinputrow("name", 1, "", 'Name', '', 20, 64, true, '', '');
+        $formfields .= '<input type="hidden" name="uncontrolled_issues" value="0">';
+        $formfields .= $this->component->buildcheckboxrow("uncontrolled_issues", "1", "Issues are not tracked (determined by stocktake)", false, 2, "Uncontrolled issues", '', false, false, false);
         $this->preparecommontop(false, false, '', $this->locationid);
         return $formfields;
     }

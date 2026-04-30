@@ -280,6 +280,7 @@ class AttendanceReportForm extends \fw\view\form\Form {
                 <div>&nbsp;</div>
                 <div id="summarywrapper">
                     <div class="summaryheading">Period</div><div class="summaryheading">Clients</div><div class="summaryheading">Total in<br>Households</div><div class="summaryheading">Children</div>
+                    <div class="summaryheading">Current Month to date</div><div>{$dat[3]["clients"]}</div><div>{$dat[3]["population"]}</div><div>{$dat[3]["children"]}</div>
                     <div class="summaryheading">Previous Month</div><div>{$dat[0]["clients"]}</div><div>{$dat[0]["population"]}</div><div>{$dat[0]["children"]}</div>
                     <div class="summaryheading">Previous Quarter</div><div>{$dat[1]["clients"]}</div><div>{$dat[1]["population"]}</div><div>{$dat[1]["children"]}</div>
                     <div class="summaryheading">Previous Year</div><div>{$dat[2]["clients"]}</div><div>{$dat[2]["population"]}</div><div>{$dat[2]["children"]}</div>

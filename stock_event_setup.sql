@@ -13,8 +13,9 @@ INSERT INTO `role` (`name`, `cellname`, `rosterindex`) VALUES
 -- 2. New table: location
 -- -----------------------------------------------------------------------------
 CREATE TABLE `location` (
-  `id`   INT          NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(45)  NOT NULL,
+  `id`                  INT         NOT NULL AUTO_INCREMENT,
+  `name`                VARCHAR(45) NOT NULL,
+  `uncontrolled_issues` TINYINT(1)  NOT NULL DEFAULT 0 COMMENT 'This means the location''s issues are not tracked so are determined by a stocktake',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

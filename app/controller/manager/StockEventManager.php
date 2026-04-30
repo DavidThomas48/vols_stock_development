@@ -10,7 +10,9 @@ class StockEventManager extends \fw\controller\manager\StdManager
 
     public function __construct(
         protected \apptable\StockEventTable    $table,
-        protected \apptable\StockMovementTable $movementtable
+        protected \apptable\StockMovementTable $movementtable,
+        protected \apptable\LocationTable      $locationtable,
+        protected \apptable\StockTable         $stocktable
     ) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
     }
@@ -19,6 +21,8 @@ class StockEventManager extends \fw\controller\manager\StdManager
         if ($this->trace || $trace) { echo "Enter ".__METHOD__."<br>"; }
         parent::init($session);
         $this->movementtable->init($this->db, $this->user_id);
+        $this->locationtable->init($this->db, $this->user_id);
+        $this->stocktable->init($this->db, $this->user_id);
         if ($this->trace || $trace) { echo "Leave ".__METHOD__."<br>"; }
     }
 
@@ -177,6 +181,11 @@ class StockEventManager extends \fw\controller\manager\StdManager
             $success  = $this->table->update($set, $where, $numrows, $errormessage);
         }
 
+        // For stocktakes at uncontrolled-issues locations: generate variance issue and cancel.
+        if ($success && $event['event'] === 'stocktake') {
+            $success = $this->postclosestocktakeifuncontrolled($event, $errormessage);
+        }
+
         if ($this->trace) { echo "Leave ".__METHOD__." OK={$success}<br>"; }
         return $success;
     }
@@ -232,6 +241,67 @@ class StockEventManager extends \fw\controller\manager\StdManager
         }
         if ($this->trace) { echo "Leave ".__METHOD__." OK={$success}<br>"; }
         return $success;
+    }
+
+    // For stocktakes at locations with uncontrolled_issues = true:
+    // create a closed issue event (dated 1 minute before the stocktake) with
+    // movements qty = variance for every item that has a non-zero variance.
+    // The stocktake remains closed as the new baseline; the issue sits just before
+    // it in the timeline, capturing the untracked consumption.
+    // If all variances are zero, no issue event is created.
+    private function postclosestocktakeifuncontrolled($event, &$errormessage) {
+        if ($this->trace) { echo "Enter ".__METHOD__." event={$event['id']}<br>"; }
+
+        $loc = []; $loc_n = 0;
+        $this->locationtable->selectonID($event['location1_id'], $loc, $loc_n);
+        if (empty($loc['uncontrolled_issues'])) {
+            if ($this->trace) { echo "Leave ".__METHOD__." (controlled location)<br>"; }
+            return true;
+        }
+
+        $variance_rows = []; $var_n = 0;
+        if (!$this->stocktable->getstocktakevariance($event['id'], $variance_rows, $var_n)) {
+            $errormessage = "Could not compute variance for stocktake {$event['id']}.";
+            return false;
+        }
+
+        $nonzero = array_values(array_filter($variance_rows, fn($r) => $r['variance'] != 0));
+        if (empty($nonzero)) {
+            if ($this->trace) { echo "Leave ".__METHOD__." (zero variance — stocktake stays closed)<br>"; }
+            return true;
+        }
+
+        // Create a new closed issue event dated 1 minute before the stocktake.
+        $issue_date   = date('Y-m-d H:i:s', strtotime($event['date_created']) - 60);
+        $new_event_id = 0;
+        $this->table->clear();
+        $this->table->setfield("event",        "issue");
+        $this->table->setfield("location1_id", $event['location1_id']);
+        $this->table->setfield("date_created", $issue_date);
+        $this->table->setfield("status",       "closed");
+        $this->table->setfield("date_closed",  date('Y-m-d H:i:s'));
+        if (!$this->table->insert(true, $new_event_id, false, $errormessage)) {
+            return false;
+        }
+
+        // Create one movement per non-zero-variance item; qty = variance.
+        foreach ($nonzero as $row) {
+            $this->movementtable->clear();
+            $this->movementtable->setfield("stock_id",       $row['id']);
+            $this->movementtable->setfield("stock_event_id", $new_event_id);
+            $this->movementtable->setfield("location_id",    $event['location1_id']);
+            $this->movementtable->setfield("unit",           "");
+            $this->movementtable->setfield("unit_qty",       "1");
+            $this->movementtable->setfield("movement_date",  $issue_date);
+            $this->movementtable->setfield("qty",            $row['variance']);
+            $mid = 0;
+            if (!$this->movementtable->insert(true, $mid, false, $errormessage)) {
+                return false;
+            }
+        }
+
+        if ($this->trace) { echo "Leave ".__METHOD__." OK=1 issue_event={$new_event_id}<br>"; }
+        return true;
     }
 
     // =========================================================================

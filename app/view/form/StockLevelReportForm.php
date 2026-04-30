@@ -46,6 +46,7 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
     public function buildinputs($rights=[], $trace=false) {
         $locations   = $this->parents['locations']   ?? [];
         $location_id = $this->parents['location_id'] ?? '';
+        $report_type = $this->parents['report_type'] ?? 'stocklevels';
         $as_at_mysql = $this->parents['as_at']       ?? '';   // 'YYYY-MM-DD HH:MM:SS' or ''
         $as_at_html5 = $as_at_mysql
             ? substr(str_replace(' ', 'T', $as_at_mysql), 0, 16)  // 'YYYY-MM-DDTHH:MM'
@@ -179,8 +180,18 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
         $formfields .= '</div>'; // vols-stockreport-table
         $formfields .= '</div>'; // vols-stockreport-table-wrap
 
+        $this->component->setheadingoverride("Stock Reports");
+        $rtype  = '<form id="reporttypeform" method="POST">';
+        $rtype .= '<input type="hidden" name="p" value="' . (int)$this->pagenum . '">';
+        $rtype .= '<label class="vols-stockreport-filter-label">Report:</label>';
+        $rtype .= '<select name="report_type" class="vols-stockreport-reportselect" onchange="this.form.submit()">';
+        $rtype .= '<option value="stocklevels" selected>Stock Levels</option>';
+        $rtype .= '<option value="stocktakevariance">Stocktake Variance</option>';
+        $rtype .= '<option value="usagereport">Usage Report</option>';
+        $rtype .= '</select>';
+        $rtype .= '</form>';
         // noselection=true, noactionrow=true — pure read-only display
-        $this->preparecommontop(true, true, '', '');
+        $this->preparecommontop(true, true, '<input type="hidden" name="report_type" value="stocklevels">', '', false, $rtype);
         return $formfields;
     }
 

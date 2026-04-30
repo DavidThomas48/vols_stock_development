@@ -37,6 +37,7 @@ class FormCollection {
                                ,protected DeliveryEventForm $deliveryeventform
                                ,protected TransferEventForm $transfereventform
                                ,protected AdjustmentEventForm $adjustmenteventform
+                               ,protected StocktakeVarianceReportForm $stocktakevariancereportform
                                 // ,protected SessionListForm $SessionList
                             ){
         if ($this->trace ) { echo "Enter ".__METHOD__."<br>\n"; }
@@ -142,5 +143,8 @@ class FormCollection {
     }
     public function AdjustmentEventForm() {
         return $this->adjustmenteventform;
+    }
+    public function StocktakeVarianceReportForm() {
+        return $this->stocktakevariancereportform;
     }
 }

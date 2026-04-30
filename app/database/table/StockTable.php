@@ -16,6 +16,68 @@ class StockTable extends \fw\database\table\MySQLTable
         if ($this->trace) { echo 'Leave '.__METHOD__.'<br>'; }
     }
 
+    // Returns variance data for a single closed stocktake event.
+    // variance = stocktake_qty - (stock level as at event.date_created - 1 minute).
+    // Reusable: can be called from any manager that needs variance figures.
+    public function getstocktakevariance($event_id, &$results, &$numrows, $trace=false) {
+        if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
+        $eid = $this->real_escape_string($event_id);
+
+        $ev_rows = []; $ev_n = 0;
+        $this->query(
+            "SELECT se.date_created, se.location1_id"
+            . " FROM stock_event se"
+            . " WHERE se.id = '{$eid}' AND se.event = 'stocktake' AND se.status = 'closed'",
+            $ev_rows, $ev_n, $trace
+        );
+        if ($ev_n === 0) {
+            $results = []; $numrows = 0;
+            if ($this->trace || $trace) { echo 'Leave '.__METHOD__." (event not found)<br>"; }
+            return true;
+        }
+
+        $location_id = $ev_rows[0]['location1_id'];
+        $as_at       = date('Y-m-d H:i:s', strtotime($ev_rows[0]['date_created']) - 60);
+
+        $levels = []; $levels_n = 0;
+        $this->getstockwithlevels($levels, $levels_n, $location_id, $as_at, $trace);
+        $level_by_id = [];
+        foreach ($levels as $level) {
+            $level_by_id[$level['id']] = (float)$level['current_qty'];
+        }
+
+        $st_rows = []; $st_n = 0;
+        $this->query(
+            "SELECT sm.stock_id as id, sm.stock_qoh as stocktake_qty,"
+            . " s.Name, s.Code, sc.Name as category_name"
+            . " FROM stock_movement sm"
+            . " JOIN stock s ON sm.stock_id = s.id"
+            . " LEFT JOIN stock_category sc ON s.category_id = sc.id"
+            . " WHERE sm.stock_event_id = '{$eid}'"
+            . " ORDER BY sc.Name, s.Name",
+            $st_rows, $st_n, $trace
+        );
+
+        $results = [];
+        foreach ($st_rows as $st) {
+            $sid          = $st['id'];
+            $stock_level  = $level_by_id[$sid] ?? 0.0;
+            $stocktake_qty = (float)$st['stocktake_qty'];
+            $results[] = [
+                'id'           => $sid,
+                'Name'         => $st['Name'],
+                'Code'         => $st['Code'],
+                'category_name'=> $st['category_name'] ?? 'Uncategorised',
+                'stocktake_qty'=> $stocktake_qty,
+                'stock_level'  => $stock_level,
+                'variance'     => $stocktake_qty - $stock_level,
+            ];
+        }
+        $numrows = count($results);
+        if ($this->trace || $trace) { echo 'Leave '.__METHOD__."  ({$numrows} rows)<br>"; }
+        return true;
+    }
+
     // $location_id: when non-empty, restricts all calculations to that location.
     // When empty, runs the per-location calculation independently for every location
     // that has stock movements and sums the results — each location uses its own

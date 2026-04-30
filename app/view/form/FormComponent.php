@@ -2,7 +2,7 @@
 namespace app\view\form;
 use \lib\StdLib as lib;
 class FormComponent  extends \fw\view\form\FormComponent{
-    protected $trace = false;                
+    protected $trace = false;
     protected $radioid = 0;
     protected $mustbenewrecord;
     protected $singlerecord;
@@ -13,6 +13,11 @@ class FormComponent  extends \fw\view\form\FormComponent{
     protected $odd = false;
     protected $processed; // record the fact that this form was processed in case errors occur and error messages have to be re-rendered
     protected $pagenum;
+    private   $headingoverride = '';
+
+    public function setheadingoverride(string $text): void {
+        $this->headingoverride = $text;
+    }
     protected $formname;
     protected $objname;
     protected $rights;
@@ -751,11 +756,12 @@ class FormComponent  extends \fw\view\form\FormComponent{
                                         $nextpage_num=0,$noactionrow=false,$noselection=false,$selecttext='',$menu='',
                                         $trace=false,$headingclass="",$secondselectorname="")     {
         if ($this->trace || $trace ) { echo gtab(1)."Enter ".__METHOD__.$selecttext."<br>"; }// var_dump($this->dataerrors);  echo "<br>";
-        $heading["heading"] = $this->objectname.' Details';
+        $heading["heading"] = !empty($this->headingoverride) ? $this->headingoverride : ($this->objectname.' Details');
+        $this->headingoverride = '';
         $heading["headingclass"] = $headingclass;
         $heading["subheading"] = $subheading;
         $heading["subheadingclass"] = $subheadingclass;
-        $actionbuttons = ["noactionrow"=>$noactionrow,"buttons"=>$actionbuttons,"noselection"=>$noselection,"names"=>$names,"selecttext"=>$selecttext,"secondselectorname" =>$secondselectorname];        
+        $actionbuttons = ["noactionrow"=>$noactionrow,"buttons"=>$actionbuttons,"noselection"=>$noselection,"names"=>$names,"selecttext"=>$selecttext,"secondselectorname" =>$secondselectorname];
         $top = $this->rendercommontopbrief($heading,$actionbuttons,$menu,$trace);
         if ( $this->trace || $trace) { echo gtab(-1)."Leave ".__METHOD__."<br>"; }
         return $top;
