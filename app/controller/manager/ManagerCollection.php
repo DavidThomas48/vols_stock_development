@@ -28,6 +28,7 @@ class ManagerCollection {
                                ,protected StockSupplierManager $stocksuppliermanager
                                ,protected StockEventManager $stockeventmanager
                                ,protected StocktakeVarianceReportManager $stocktakevariancereportmanager
+                               ,protected StockClientManager $stockclientmanager
                                ){
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>\n"; }
 	}
@@ -130,5 +131,9 @@ class ManagerCollection {
     public function StocktakeVarianceReportManager() {
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
         return $this->stocktakevariancereportmanager;
+    }
+    public function StockClientManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->stockclientmanager;
     }
 }
