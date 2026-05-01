@@ -37,8 +37,8 @@ class StockForm extends \fw\view\form\StdCRUDForm {
 
     public function buildinputs($rights=[], $trace=false) {
         $categorydata = array_combine(
-            array_column($this->parents, "id"),
-            array_column($this->parents, "Name")
+            array_column($this->parents['categories'] ?? $this->parents, "id"),
+            array_column($this->parents['categories'] ?? $this->parents, "Name")
         );
         $optn = [];
         $formfields  = '<div class="vols-stockmaint-header vols-stockitem-header">';
@@ -48,6 +48,26 @@ class StockForm extends \fw\view\form\StdCRUDForm {
         $formfields .= $this->component->buildinputrow("Name", 1, "", 'Name', '', 20, 64, true, '', '');
         $formfields .= $this->component->buildinputrow("Code", 2, "", 'Code', 'Short code for this item', 20, 20, true, '', '');
         $formfields .= $this->component->buildselectrow("category_id", 3, 1, 'Category', $categorydata, "", $optn, false, false, true, false, '', false);
+
+        $alllocations = $this->parents['locations'] ?? [];
+        if (!empty($alllocations)) {
+            $formfields .= $this->component->rendersectionheading("Target stock levels by location");
+            $this->component->setwidths(40, 20, 40);
+            $fn = 4;
+            foreach ($alllocations as $loc) {
+                $formfields .= $this->component->buildinputrow(
+                    "target_qty_" . $loc['id'],
+                    $fn++,
+                    "",
+                    $loc['name'],
+                    "Leave blank for no target",
+                    6, 9,
+                    false, '', '',
+                    false, false, '', 1, '', 'number'
+                );
+            }
+        }
+
         $this->preparecommontop(false, false, '', $this->stockid);
         return $formfields;
     }
