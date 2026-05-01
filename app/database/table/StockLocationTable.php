@@ -1,7 +1,7 @@
 <?php
 namespace apptable;
 use \lib\StdLib as lib;
-class LocationTable extends \fw\database\table\MySQLTable
+class StockLocationTable extends \fw\database\table\MySQLTable
 {
     private $trace = false;
     public function init($db, $user_id="null") {

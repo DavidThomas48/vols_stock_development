@@ -8,7 +8,7 @@ class LocationManager extends \fw\controller\manager\StdManager
     protected $db;
     protected $linkedobject = "";
     public function __construct(
-        protected \apptable\LocationTable   $table,
+        protected \apptable\StockLocationTable   $table,
         protected \apptable\StockEventTable $stockeventtable
     ) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }

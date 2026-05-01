@@ -11,7 +11,7 @@ class StocktakeVarianceReportManager extends \fw\controller\manager\StdManager
     private $event_id    = '';
 
     public function __construct(protected \apptable\StockTable      $table,
-                                protected \apptable\LocationTable   $locationtable,
+                                protected \apptable\StockLocationTable $locationtable,
                                 protected \apptable\StockEventTable $eventtable) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
     }

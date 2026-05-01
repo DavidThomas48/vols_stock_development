@@ -13,7 +13,7 @@ class StockUsageReportManager extends \fw\controller\manager\StdManager
 
     public function __construct(
         protected \apptable\StockMovementTable $table,
-        protected \apptable\LocationTable      $locationtable
+        protected \apptable\StockLocationTable  $locationtable
     ) {}
 
     public function init($session, $trace=false) {

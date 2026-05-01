@@ -11,7 +11,7 @@ class StockLevelReportManager extends \fw\controller\manager\StdManager
     private $as_at       = '';
 
     public function __construct(protected \apptable\StockTable    $table,
-                                protected \apptable\LocationTable $locationtable) {
+                                protected \apptable\StockLocationTable $locationtable) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
     }
 

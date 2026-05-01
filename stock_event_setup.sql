@@ -10,9 +10,9 @@ INSERT INTO `role` (`name`, `cellname`, `rosterindex`) VALUES
 ('Perform Stocktake', 'StockOp', 0);
 
 -- -----------------------------------------------------------------------------
--- 2. New table: location
+-- 2. New table: stock_location
 -- -----------------------------------------------------------------------------
-CREATE TABLE `location` (
+CREATE TABLE `stock_location` (
   `id`                  INT         NOT NULL AUTO_INCREMENT,
   `name`                VARCHAR(45) NOT NULL,
   `uncontrolled_issues` TINYINT(1)  NOT NULL DEFAULT 0 COMMENT 'This means the location''s issues are not tracked so are determined by a stocktake',
@@ -74,8 +74,8 @@ CREATE TABLE `stock_event` (
   KEY `fk_se_location2_idx`    (`location2_id`),
   KEY `fk_se_supplier_idx`     (`supplier_id`),
   KEY `fk_se_stock_client_idx` (`stock_client_id`),
-  CONSTRAINT `fk_se_location1`    FOREIGN KEY (`location1_id`)    REFERENCES `location`      (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_se_location2`    FOREIGN KEY (`location2_id`)    REFERENCES `location`      (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_se_location1`    FOREIGN KEY (`location1_id`)    REFERENCES `stock_location` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_se_location2`    FOREIGN KEY (`location2_id`)    REFERENCES `stock_location` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_se_supplier`     FOREIGN KEY (`supplier_id`)     REFERENCES `stock_supplier`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_se_stock_client` FOREIGN KEY (`stock_client_id`) REFERENCES `stock_client` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -95,7 +95,7 @@ ALTER TABLE `stock_movement`
 
 ALTER TABLE `stock_movement`
     ADD CONSTRAINT `fk_sm_stock_event` FOREIGN KEY (`stock_event_id`) REFERENCES `stock_event` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-    ADD CONSTRAINT `fk_sm_location`    FOREIGN KEY (`location_id`)    REFERENCES `location`    (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+    ADD CONSTRAINT `fk_sm_location`    FOREIGN KEY (`location_id`)    REFERENCES `stock_location` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- -----------------------------------------------------------------------------
 -- 8. New pages (continuing from existing stock pages 401–408)

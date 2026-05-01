@@ -42,7 +42,7 @@ class StockEventTable extends \fw\database\table\MySQLTable
         $location1_id = $this->real_escape_string($location1_id);
         $query  = "SELECT se.*, l.name as location1_name";
         $query .= " FROM stock_event se";
-        $query .= " JOIN location l ON se.location1_id = l.id";
+        $query .= " JOIN stock_location l ON se.location1_id = l.id";
         $query .= " WHERE se.event = '{$event_type}'";
         $query .= " AND se.status = 'in progress'";
         $query .= " AND se.location1_id = '{$location1_id}'";
@@ -60,8 +60,8 @@ class StockEventTable extends \fw\database\table\MySQLTable
         $query  = "SELECT se.*";
         $query .= ", l1.name as location1_name, l2.name as location2_name";
         $query .= " FROM stock_event se";
-        $query .= " JOIN location l1 ON se.location1_id = l1.id";
-        $query .= " JOIN location l2 ON se.location2_id = l2.id";
+        $query .= " JOIN stock_location l1 ON se.location1_id = l1.id";
+        $query .= " JOIN stock_location l2 ON se.location2_id = l2.id";
         $query .= " WHERE se.event = 'transfer'";
         $query .= " AND se.status = 'in progress'";
         $query .= " AND se.location1_id = '{$location1_id}'";

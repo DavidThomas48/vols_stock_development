@@ -11,7 +11,7 @@ class StockEventManager extends \fw\controller\manager\StdManager
     public function __construct(
         protected \apptable\StockEventTable    $table,
         protected \apptable\StockMovementTable $movementtable,
-        protected \apptable\LocationTable      $locationtable,
+        protected \apptable\StockLocationTable  $locationtable,
         protected \apptable\StockTable         $stocktable
     ) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
