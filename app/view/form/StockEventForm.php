@@ -247,7 +247,7 @@ abstract class StockEventForm extends \fw\view\form\Form {
     jQuery(document).on('change', '#se-category', function() {
         var event_id = jQuery('#se-event-id').val();
         if (event_id && parseInt(event_id) > 0) {
-            loadstock(event_id, jQuery(this).val(), jQuery('#se-supplier').val() || '');
+            loadstock(event_id, jQuery(this).val(), '');
         }
     });
 

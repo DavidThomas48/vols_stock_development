@@ -103,16 +103,30 @@ class DeliveryEventForm extends StockEventForm {
 
     // Filter category dropdown to only show categories supplied by the selected supplier.
     function filtercategoriesbysupplier(sup_id) {
-        jQuery('#se-category option').each(function() {
-            if (!jQuery(this).val()) {
-                jQuery(this).show();
-                return;
-            }
+        if (!sup_id) {
+            jQuery('#se-category option').show();
+            jQuery('#se-category').val('');
+            return;
+        }
+        // Check whether any categories are linked to this supplier.
+        var hasLinked = false;
+        jQuery('#se-category option[value!=""]').each(function() {
             var ids = (jQuery(this).data('supplier-ids') || '').toString();
-            var list = ids ? ids.split(',') : [];
-            jQuery(this).toggle(!sup_id || list.indexOf(String(sup_id)) !== -1);
+            if (ids && ids.split(',').indexOf(String(sup_id)) !== -1) {
+                hasLinked = true;
+            }
         });
-        // Reset to "All categories" whenever supplier changes.
+        jQuery('#se-category option').each(function() {
+            if (!jQuery(this).val()) { jQuery(this).show(); return; }
+            if (!hasLinked) {
+                // No supplier-category links configured — show all categories.
+                jQuery(this).show();
+            } else {
+                var ids = (jQuery(this).data('supplier-ids') || '').toString();
+                var list = ids ? ids.split(',') : [];
+                jQuery(this).toggle(list.indexOf(String(sup_id)) !== -1);
+            }
+        });
         jQuery('#se-category').val('');
     }
 
@@ -134,7 +148,7 @@ class DeliveryEventForm extends StockEventForm {
             jQuery('#se-start-btn').text('Resume Delivery');
             jQuery('#se-start-area').show();
             jQuery('#se-event-controls').show();
-            loadstock(event_id, '', sup);
+            loadstock(event_id, '', '');
         } else {
             jQuery('#se-status-msg').text('No delivery in progress for this supplier.');
             jQuery('#se-start-btn').text('Start Delivery');
@@ -158,13 +172,13 @@ class DeliveryEventForm extends StockEventForm {
         var existing_id = parseInt(jQuery('#se-event-id').val() || '0');
         if (existing_id > 0) {
             jQuery('#se-event-controls').show();
-            loadstock(existing_id, '', sup);
+            loadstock(existing_id, '', '');
             return;
         }
 
         createstockevent('delivery', loc, null, sup, null, function(event_id) {
             jQuery('#se-location-id').val(loc);
-            loadstock(event_id, '', sup);
+            loadstock(event_id, '', '');
         });
     });
 })();
