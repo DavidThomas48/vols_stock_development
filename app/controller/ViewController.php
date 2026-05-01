@@ -212,6 +212,7 @@ class ViewController {
             case $c2v($mm::STOCKUSAGEREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockUsageReportManager(),$this->forms->StockUsageReportForm(),$errormessage,"",$trace);break;
             case $c2v($mm::LOCATIONPAGE)        : $this->setthispage(0,$this->pagenum,$this->mgrs->LocationManager(),$this->forms->LocationForm(),$errormessage,"name",$trace);break;
             case $c2v($mm::STOCKSUPPLIERPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockSupplierManager(),$this->forms->StockSupplierForm(),$errormessage,"name",$trace);break;
+            case $c2v($mm::STOCKCLIENTPAGE)     : $this->setthispage(0,$this->pagenum,$this->mgrs->StockClientManager(),$this->forms->StockClientForm(),$errormessage,"name",$trace);break;
             case $c2v($mm::STOCKTAKEEVENTPAGE)  : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->StocktakeEventForm(),$errormessage,"",$trace);break;
             case $c2v($mm::DELIVERYEVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->DeliveryEventForm(),$errormessage,"",$trace);break;
             case $c2v($mm::TRANSFEREVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->TransferEventForm(),$errormessage,"",$trace);break;
@@ -280,6 +281,7 @@ class ViewController {
             case $c2v($mm::STOCKLEVELREPORTPAGE)  :$success = $this->prepare_stocklevelreport_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::DAMAGEDSTOCKPAGE)      :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::STOCKUSAGEREPORTPAGE) :$success = $this->prepare_stockusagereport_body($user_id,$errormessage,$trace); break;
+            case $c2v($mm::STOCKCLIENTPAGE)     :$success = $this->prepare_std_body($user_id,"name",$errormessage,$trace); break;
             case $c2v($mm::STOCKTAKEEVENTPAGE)  :
             case $c2v($mm::DELIVERYEVENTPAGE)   :
             case $c2v($mm::TRANSFEREVENTPAGE)   :

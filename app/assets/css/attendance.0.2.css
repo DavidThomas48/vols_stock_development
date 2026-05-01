@@ -209,12 +209,13 @@ ul {
 #menubutton.clickable.menu ul li,
 #menubutton.clickable.menu ul li ul li{
     position: relative;
+    display: flex;
+    align-content: center;
+    flex-wrap: wrap;
     width: 20vw;
-    height: 2vh;
+    height: 4vh;
 }
-#menubutton.clickable.menu ul li ul li{
-    background-color:  var(--menuullibg2) ;
-}
+
 #menubutton.clickable.menu ul li ul li:first-child{
     width:20vw; 
 }

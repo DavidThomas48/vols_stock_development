@@ -28,7 +28,7 @@
     -moz-transition:  0.5s ease; /* Firefox */
     -webkit-transition:  0.5s ease; /*safari and chrome */    
 }
-body:has(#menubutton ul li.hover,#menubutton.clickable.menu.hover,#menubutton ul li:hover,#menubutton.clickable.menu:hover) #curtain {
+body:has(#menubutton.clickable.menu.hover,#menubutton ul li:hover) #curtain {
     visibility:visible;
     opacity:0.7;
     transition:  0.3s ease;
@@ -37,6 +37,8 @@ body:has(#menubutton ul li.hover,#menubutton.clickable.menu.hover,#menubutton ul
     -moz-transition:  0.3s ease; /* Firefox */
     -webkit-transition:  0.3s ease; /*safari and chrome */
 }
+
+/* MENU APPEARANCE */
 #menubutton.clickable {
     cursor: pointer;
 }
@@ -54,8 +56,6 @@ body:has(#menubutton.clickable .clicked){
     background-color: var(--menubtnbg);
     font-size: 1.7rem;
     font-weight: 500;
-    width: 140px;
-    height: 3rem;
 }
 .clickable.menu:hover, .clickable.menu.hover {
     color: var(--menubtnhovercolor);
@@ -64,71 +64,38 @@ body:has(#menubutton.clickable .clicked){
 #menubutton.clickable.menu {
     overflow: visible;
     display: block;
-    z-index: 5;
 }
 #menubutton.clickable.menu ul {
     visibility:hidden;
-    width:200px; 
     display: block;       
-    position: relative;  
     background: var(--menuulbg);
     padding-inline-start:5px; 
-    padding-top: 5px;
-    padding-bottom: 5px;
     list-style-type: none;   
-    border: 2px solid var(--menuulborder);
-    z-index:10;
 }
-#menubutton.clickable.menu ul.submenu {
-    top:-5rem;
-    right: 218px;        
-    z-index:20;
-}
-#menubutton.clickable.menu ul.toplevel{
-    top:-12px; 
-    left: -62px;        
-    z-index:20;
-}  
 #menubutton.clickable.menu ul li,
 #menubutton.clickable.menu ul li ul li{
     color:   var(--menuullicolor); 
     background-color:  var(--menuullibg) ;
-    width: 200px;
-    display: block;
     text-align: left; 
-    line-height: 1;
-    height: 2vh;
-    padding: 2rem 0 ;
-    z-index:10;
-    /*margin-left: 0.5rem;*/
 }
-#menubutton.clickable.menu ul.toplevel.menu li {
-    z-index:20;
-}
-#menubutton.clickable.menu ul li ul li:first-child{
-    width:210px; 
-}
-
 #menubutton.clickable.menu ul ,
 #menubutton.clickable.menu ul li ul{
     opacity: 0;
 }
-
-
-#menubutton.clickable.menu li span.submenuarrowspan {
-    width: 20px;
-    display: inline-block;
-    margin-left: 1vw;
+/*#menubutton.clickable.menu ul li,
+#menubutton.clickable.menu ul li ul li{
+    padding: 2rem 0 ;
 }
-#menubutton.clickable.menu ul li.menuseparator,
-#menubutton.clickable.menu ul li ul li.menuseparator{
+*/
+            
+#menubutton.clickable.menu li.menuseparator{
     background-color: var(--volscolor1); 
     line-height: 0;
     height: 5px;
     padding: 0;
 }               
-#menubutton.clickable.menu ul li:hover,
-#menubutton.clickable.menu ul li.hover {
+#menubutton.clickable.menu li:hover,
+#menubutton.clickable.menu li.hover {
     color: var(--menuullihovercolor);  
     background-color: var(--menuullihoverbg);  
     transition:  0.5s ease;
@@ -148,7 +115,73 @@ body:has(#menubutton.clickable .clicked){
     -ms-transition: opacity 0.5s ease; /* IE 10 */
     -moz-transition: opacity 0.5s ease; /* Firefox */
     -webkit-transition: opacity 0.5s ease; /*safari and chrome */
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }    
+#menubutton.clickable.menu ul li ul li{
+    background-color:  var(--menuullibg2) ;
+}
+
+
+
+
+/* =============================  MENU POSITION & SIZE */
+#menubutton.clickable.menu{
+    width: 150px;
+    height: 3rem;
+    z-index: 5;
+}
+#menubutton.clickable.menu ul{
+    position: relative;
+    list-style-type: none;
+    width: 200px; 
+    padding: 0;
+    margin: 0;
+    border: 0;
+}  
+#menubutton.clickable.menu ul.toplevel{
+    left:-50px;  
+    z-index: 10;
+}
+#menubutton.clickable.menu ul.toplevel li div{
+    position: relative;
+    z-index: 15;
+}
+#menubutton.clickable.menu ul.submenu {
+    left: -200px;
+    top: -40px;
+    z-index:20;
+    overflow-y: visible;
+}
+#menubutton.clickable.menu ul.submenu li div{
+    position: relative;
+    z-index: 25;
+}
+#menubutton.clickable.menu li {
+    position: relative;
+    list-style-type: none;
+    /*display: inline-block;*/
+    width: 200px ;
+    height: 4rem;
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+    overflow-y: visible;
+}
+#menubutton.clickable.menu li div.menuitem {
+    /*float: left;*/
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    width: 190px;
+}
+#menubutton.clickable.menu li div.menuitem span.submenuarrow {
+    padding: 0 10px;
+    width: 20px;
+}
+#menubutton.clickable.menu li div.menuitem span.menutext{
+    padding: 0;
+    width: 140px;
+}   
 #content_panel:has(#loginpage form#pwresetgetpw) #menubutton.clickable.menu {
     position: relative;
     right: -67%;
@@ -161,3 +194,39 @@ body:has(#menubutton.clickable .clicked){
     top: -51px;
 }
 
+/*===============================================================================================
+#menubutton.clickable.menu ul {
+    position: absolute;  
+    width:20vw; 
+    border: 0 solid var(--menuulborder);
+    margin-top: 0;
+}
+#menubutton.clickable.menu ul.submenu {
+    top:  0;
+    left: -20vw;        
+    z-index:20;
+    padding-top: 0;
+}
+#menubutton.clickable.menu ul.toplevel{
+    top: 4vh; 
+    left: -10vw;        
+    z-index:15;
+}  
+#menubutton.clickable.menu ul li,
+#menubutton.clickable.menu ul li ul li{
+    position: relative;
+    width: 20vw;
+    height: 2vh;
+}
+#menubutton.clickable.menu ul li ul li{
+    background-color:  var(--menuullibg2) ;
+}
+#menubutton.clickable.menu ul li ul li:first-child{
+    width:20vw; 
+}
+#menubutton.clickable.menu li span.submenuarrowspan {
+    width: 2vw;
+    display: inline-block;
+    margin-left: 1vw;
+}
+/*===============================================================================================*/

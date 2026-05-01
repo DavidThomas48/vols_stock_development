@@ -114,6 +114,7 @@ class RequestProcessController {
                 case "stockvariancereportform": $success = true; break;
                 case "locationform":         $success = $this->processCRUDform($this->managercollection->LocationManager(),$errormessage,$trace); break;
                 case "stocksupplierform":    $success = $this->processCRUDform($this->managercollection->StockSupplierManager(),$errormessage,$trace); break;
+                case "stockclientform":      $success = $this->processCRUDform($this->managercollection->StockClientManager(),$errormessage,$trace); break;
                 default :               $errormessage = 'No FORM recognised. $_POST = '.implode(",",$this->requestdata);
                                         $success = false;
             }

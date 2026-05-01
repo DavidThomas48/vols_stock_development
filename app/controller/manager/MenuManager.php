@@ -52,6 +52,7 @@ class MenuManager  extends \fw\controller\manager\StdManager
     const DELIVERYEVENTPAGE    = 412;
     const TRANSFEREVENTPAGE    = 413;
     const ADJUSTMENTEVENTPAGE  = 414;
+    const STOCKCLIENTPAGE      = 415;
     private $pagenumbers = ["0"=>"Submenu Heading"];
     private $c2v;
     protected $name = "Menuitem";
@@ -112,9 +113,8 @@ class MenuManager  extends \fw\controller\manager\StdManager
         // $this->table->selectall($menuitems,$numrows,"menucode",false);
         $this->table->selectononefield("menu_number",$menunumber,$menuitems,$numrows,false,false,"menucode");
         $menucodes = $menu = $holdmenu = $holdmenuitems =  [];
-        $arrow = "<span class='submenuarrowspan'>&lt;</span>";
-        $noarrow = "<span class='submenuarrowspan'>&nbsp;</span>";
-// lib::pr($rights,$isadmin);
+        $arrow = "<span class='submenuarrow'>&lt;</span>";
+        $noarrow = "<span class='submenuarrow'>&nbsp;</span>";
         foreach ($menuitems as $key => $item) {
             if (!$item["inactive"]) {
                 $page_number = $item["page_number"];
@@ -124,8 +124,6 @@ class MenuManager  extends \fw\controller\manager\StdManager
                     || $item["is_public"]) {
                     $holdmenuitems[$key] = $item;
                     $menucodes[$key] = $item["menucode"];
-                } else {
-// lib::pr($item);                
                 }
             }
         }
@@ -160,6 +158,7 @@ class MenuManager  extends \fw\controller\manager\StdManager
         foreach ($menuitems as $key => $item) {
             $pagenum = $item["page_number"];
             // first determine which menu contains this item
+            $itemtext = "<span class='menutext'>{$item['text']}</span>";
             $pn = $item["menucode"];   //  e.g.  1_3_2
             $ppos=strrpos($pn,"_"); // note - using strrpos(), not strpos(), so ppos = 3
             $containermenucode = ($ppos===false)?"0":substr($pn,0,$ppos); //so item's menucode of 1.3.2 gives containing menu's id of 1.3
@@ -169,10 +168,10 @@ class MenuManager  extends \fw\controller\manager\StdManager
             if ($item["page_number"] == "-1") { // i.e. a horizontal line
                 $li .= " class='menuseparator'></li>";
             } else if ($item["page_number"] !=="0") { // i.e. points to page
-                $li .= " class='newpage'  data-pagenumber='{$pagenum}'>{$noarrow}{$item['text']}</li>";
+                $li .= " class='newpage'  data-pagenumber='{$pagenum}'><div class='menuitem'>{$noarrow}{$itemtext}</div></li>";
             } else {
                 $submenucode = $item["menucode"];
-                $li .= " class='submenuli'>{$arrow}{$item['text']} @@MENU{$submenucode}@@</li>"; // incude placeholder for the nested submenu
+                $li .= " class='submenuli'><div class='menuitem'>{$arrow}{$itemtext}</div>@@MENU{$submenucode}@@</li>"; // incude placeholder for the nested submenu
             }
             $menu[$containermenucode] .= $li; 
         }

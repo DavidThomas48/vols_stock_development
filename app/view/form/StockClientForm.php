@@ -1,17 +1,16 @@
 <?php
 namespace app\view\form;
 use \lib\StdLib as lib;
-class LocationForm extends \fw\view\form\StdCRUDForm {
+class StockClientForm extends \fw\view\form\StdCRUDForm {
     protected $trace       = false;
-    protected $promptwidth = 25;
-    protected $inputwidth  = 40;
-    protected $hintwidth   = 35;
+    protected $promptwidth = 30;
+    protected $inputwidth  = 50;
+    protected $hintwidth   = 20;
     protected $fields      = [];
     protected $names       = [];
     protected $parents     = [];
-    protected $formname    = "locationform";
-    protected $objname     = "Location";
-    protected $locationid;
+    protected $formname    = "stockclientform";
+    protected $objname     = "Stock Client";
 
     public function __construct(protected FormComponent $component) {
         $this->singlerecord = false;
@@ -19,14 +18,12 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
 
     public function init($session, $data=[], $parents="", $trace=false) {
         parent::init($session, $data, $parents, $trace);
-        $this->locationid = $this->requestdata["id"] ?? "";
     }
 
     public function initfields() {
         $this->fields = array(
-            "id"                  => "",
-            "name"                => "",
-            "uncontrolled_issues" => "",
+            "id"   => "",
+            "name" => "",
         );
     }
 
@@ -35,15 +32,12 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function buildinputs($rights=[], $trace=false) {
-        $formfields  = '<div class="vols-stockmaint-header vols-location-header">';
-        $formfields .= '<span class="vols-stockmaint-icon">&#128205;</span>';
-        $formfields .= '<span class="vols-stockmaint-text">Manage locations. Add, edit or delete the physical locations used in stock events.</span>';
+        $formfields  = '<div class="vols-stockmaint-header vols-stockclient-header">';
+        $formfields .= '<span class="vols-stockmaint-icon">&#128101;</span>';
+        $formfields .= '<span class="vols-stockmaint-text">Manage stock clients. Add, edit or delete the clients used in stock issue events.</span>';
         $formfields .= '</div>';
         $formfields .= $this->component->buildinputrow("name", 1, "", 'Name', '', 20, 64, true, '', '');
-        $this->component->setwidths (25,15,60);
-        $formfields .= '<input type="hidden" name="uncontrolled_issues" value="0">';
-        $formfields .= $this->component->buildcheckboxrow("uncontrolled_issues", "1", "", false, 2, "Untracked issues", 'Issues quantities are derived from stocktake variances.', false, false, false);
-        $this->preparecommontop(false, false, '', $this->locationid);
+        $this->preparecommontop(false, false, '', '');
         return $formfields;
     }
 
