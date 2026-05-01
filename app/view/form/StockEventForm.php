@@ -258,6 +258,21 @@ abstract class StockEventForm extends \fw\view\form\Form {
             jQuery('#se-event-controls').show();
             loadstock(event_id, '');
         }
+
+        // Recalculate table height whenever se-event-controls becomes visible,
+        // and whenever the window is resized.
+        var ctrl = document.getElementById('se-event-controls');
+        if (ctrl) {
+            new MutationObserver(function() {
+                if (jQuery('#se-event-controls').is(':visible')) {
+                    setTimeout(resizestocktable, 0);
+                }
+            }).observe(ctrl, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+        jQuery(window).on('resize', resizestocktable);
+        if (jQuery('#se-event-controls').is(':visible')) {
+            resizestocktable();
+        }
     });
 })();
 
@@ -291,6 +306,18 @@ function savemovement($input) {
     });
 }
 
+function resizestocktable() {
+    var $container = jQuery('#se-stock-table-container');
+    if (!$container.length || !$container.is(':visible')) return;
+    var containerTop = $container[0].getBoundingClientRect().top;
+    var belowHeight = 0;
+    jQuery('#se-digitpad, #se-action-buttons').each(function() {
+        belowHeight += jQuery(this).outerHeight(true) || 0;
+    });
+    var available = Math.max(200, window.innerHeight - containerTop - belowHeight - 16);
+    $container.css('max-height', available + 'px');
+}
+
 function loadstock(event_id, category_id, supplier_id) {
     var event_type = jQuery('#se-event-type').val();
     jQuery('#se-stock-table-body').html('<tr><td colspan="99" class="se-loading">Loading\u2026</td></tr>');
@@ -301,6 +328,7 @@ function loadstock(event_id, category_id, supplier_id) {
         event_type:  event_type
     }), 'stockevent_getstock').then(function(resp) {
         jQuery('#se-stock-table-body').html(resp);
+        resizestocktable();
     });
 }
 

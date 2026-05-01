@@ -2136,6 +2136,8 @@ input
 /* Stock table */
 .se-stock-table-container {
     overflow-x: auto;
+    overflow-y: auto;
+    min-height: 150px;
     margin-bottom: 1rem;
 }
 .se-stock-table {
