@@ -148,7 +148,7 @@ input
 	height: 100vh;
 	position: relative;
   margin-bottom: 10px;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 #content_panel #dialog {

@@ -102,6 +102,55 @@ class StockMovementTable extends \fw\database\table\MySQLTable
         return $success;
     }
 
+    // Returns all stock items for a transfer event.
+    // LEFT JOINs stock_item_location for the TO location to get target_qty.
+    // Includes inline correlated QOH for the TO location as current_qoh.
+    // Required = target_qty - current_qoh is computed by the caller (PHP).
+    public function getstockfortransfer($event_id, $category_id, $from_loc_id, $to_loc_id, &$results, &$numrows, $trace=false) {
+        if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
+        $event_id = $this->real_escape_string($event_id);
+        $to_loc   = $this->real_escape_string($to_loc_id);
+
+        $st_date = "(SELECT se_st2.date_created"
+                 . " FROM stock_movement sm_st2"
+                 . " JOIN stock_event se_st2 ON sm_st2.stock_event_id = se_st2.id"
+                 . " WHERE sm_st2.stock_id = s.id AND sm_st2.location_id = '{$to_loc}'"
+                 . "   AND se_st2.event = 'stocktake' AND se_st2.status = 'closed'"
+                 . " ORDER BY se_st2.date_created DESC LIMIT 1)";
+
+        $query  = "SELECT s.id as stock_id, s.Name as stock_name, s.category_id,";
+        $query .= " sc.Name as category_name,";
+        $query .= " sm.id as movement_id, sm.qty, sm.stock_qoh, sm.location_id,";
+        $query .= " sil_to.target_qty AS target_qty,";
+        $query .= " (COALESCE((SELECT sm_st.stock_qoh";
+        $query .= "   FROM stock_movement sm_st";
+        $query .= "   JOIN stock_event se_st ON sm_st.stock_event_id = se_st.id";
+        $query .= "   WHERE sm_st.stock_id = s.id AND sm_st.location_id = '{$to_loc}'";
+        $query .= "     AND se_st.event = 'stocktake' AND se_st.status = 'closed'";
+        $query .= "   ORDER BY se_st.date_created DESC LIMIT 1), 0)";
+        $query .= " + COALESCE((SELECT SUM(CASE se2.event WHEN 'issue' THEN -sm2.qty ELSE sm2.qty END)";
+        $query .= "   FROM stock_movement sm2";
+        $query .= "   JOIN stock_event se2 ON sm2.stock_event_id = se2.id";
+        $query .= "   WHERE sm2.stock_id = s.id AND sm2.location_id = '{$to_loc}'";
+        $query .= "     AND se2.event IN ('delivery','transfer','adjustment','issue')";
+        $query .= "     AND se2.status = 'closed'";
+        $query .= "     AND se2.date_created > COALESCE({$st_date}, '1970-01-01 00:00:00')";
+        $query .= "   ), 0)";
+        $query .= " ) AS current_qoh";
+        $query .= " FROM stock s";
+        $query .= " LEFT JOIN stock_category sc ON s.category_id = sc.id";
+        $query .= " LEFT JOIN stock_movement sm ON sm.stock_id = s.id AND sm.stock_event_id = '{$event_id}'";
+        $query .= " LEFT JOIN stock_item_location sil_to ON sil_to.stock_id = s.id AND sil_to.stock_location_id = '{$to_loc}'";
+        if (!empty($category_id)) {
+            $cat_safe = $this->real_escape_string($category_id);
+            $query .= " WHERE s.category_id = '{$cat_safe}'";
+        }
+        $query .= " ORDER BY sc.Name, s.Name";
+        $success = $this->query($query, $results, $numrows, $trace);
+        if ($this->trace || $trace) { echo 'Leave '.__METHOD__."  ({$numrows} rows)<br>"; }
+        return $success;
+    }
+
     // Calculates the current QOH for a single stock item at a single location.
     // QOH = stock_qoh from most recent closed stocktake
     //     + deliveries + transfers + adjustments - issues

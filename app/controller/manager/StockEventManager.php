@@ -95,6 +95,17 @@ class StockEventManager extends \fw\controller\manager\StdManager
 
         $movement_id = (int)$movement_id;
 
+        // If movement_id is 0, look up whether one already exists — this handles
+        // concurrent saves (explicit + blur) and the page-reload resume case.
+        if ($movement_id === 0) {
+            $existing = [];
+            $existing_n = 0;
+            $this->movementtable->getmovementforstockandevent($stock_id, $event_id, $existing, $existing_n);
+            if (!empty($existing) && isset($existing['id'])) {
+                $movement_id = (int)$existing['id'];
+            }
+        }
+
         // If location_id is missing/zero, derive it from the parent event.
         // Transfers store movements at the TO location (location2_id); all
         // other event types use location1_id.
@@ -314,8 +325,16 @@ class StockEventManager extends \fw\controller\manager\StdManager
     }
 
     // Returns stock items for an event, optionally filtered by category or supplier.
-    // When $supplier_id is non-empty and $category_id is empty, restricts to that supplier's categories.
+    // Transfer events use a dedicated query that includes target_qty and current_qoh.
     public function getstockforevent($event_id, $category_id, &$results, &$numrows, $supplier_id='') {
+        $ev = []; $evn = 0;
+        if ($this->table->selectonID($event_id, $ev, $evn) && ($ev['event'] ?? '') === 'transfer') {
+            return $this->movementtable->getstockfortransfer(
+                $event_id, $category_id,
+                $ev['location1_id'] ?? 0, $ev['location2_id'] ?? 0,
+                $results, $numrows, $this->trace
+            );
+        }
         return $this->movementtable->getstockforevent($event_id, $category_id, $results, $numrows, $this->trace, $supplier_id);
     }
 

@@ -123,8 +123,12 @@ abstract class StockEventForm extends \fw\view\form\Form {
 
     private function renderdigitpad(): string {
         $html  = '<div id="se-digitpad" class="se-digitpad">';
+        $html .= '<div id="se-action-buttons" class="se-action-buttons">';
+        $html .= '<button type="button" id="se-close-btn"  class="vols-button" onclick="closestockevent()">Close Event</button>';
+        $html .= '<button type="button" id="se-cancel-btn" class="vols-button vols-button-danger" onclick="cancelstockevent()">Cancel Event</button>';
+        $html .= '</div>';
         $html .= '<div class="se-pad-display">';
-        $html .= '<input type="text" id="se-pad-display" readonly tabindex="-1" placeholder="0">';
+        $html .= '<input type="text" id="se-pad-display" readonly tabindex="-1">';
         $html .= '</div>';
         $html .= '<div class="se-pad-keys">';
         $keys = ['7','8','9','4','5','6','1','2','3','clear','0','back'];
@@ -137,6 +141,10 @@ abstract class StockEventForm extends \fw\view\form\Form {
                 $html .= '<button type="button" class="se-digit-btn" data-key="' . $k . '" tabindex="-1">' . $k . '</button>';
             }
         }
+        $html .= '</div>';
+        $html .= '<div class="se-pad-nav">';
+        $html .= '<button type="button" class="se-digit-btn se-digit-prev" data-key="prev" tabindex="-1">&#9166; Prev</button>';
+        $html .= '<button type="button" class="se-digit-btn se-digit-next" data-key="next" tabindex="-1">Next &#9166;</button>';
         $html .= '</div>';
         $html .= '</div>';
         return $html;
@@ -156,19 +164,15 @@ abstract class StockEventForm extends \fw\view\form\Form {
 
         $html .= $this->rendercategoryfilter();
 
+        $html .= '<div class="se-stock-and-pad">';
         $html .= '<div id="se-stock-table-container" class="se-stock-table-container">';
         $html .= '<table id="se-stock-table" class="se-stock-table">';
         $html .= '<thead>' . $this->renderstocktableheader() . '</thead>';
         $html .= '<tbody id="se-stock-table-body"></tbody>';
         $html .= '</table>';
         $html .= '</div>';
-
         $html .= $this->renderdigitpad();
-
-        $html .= '<div id="se-action-buttons" class="se-action-buttons">';
-        $html .= '<button type="button" id="se-close-btn"  class="vols-button" onclick="closestockevent()">Close Event</button>';
-        $html .= '<button type="button" id="se-cancel-btn" class="vols-button vols-button-danger" onclick="cancelstockevent()">Cancel Event</button>';
-        $html .= '</div>';
+        $html .= '</div>'; // se-stock-and-pad
 
         $html .= '</div>'; // se-event-controls
         return $html;
@@ -185,7 +189,14 @@ abstract class StockEventForm extends \fw\view\form\Form {
         $html .= '  <div class="greeting">Welcome ' . $greeting . '</div>';
         $html .= $menu;
         $html .= '</div>';
-        $html .= '<div class="vols-form-content se-event-page">';
+        $defaults = [];
+        foreach ($this->locations as $loc) {
+            if (!empty($loc['is_delivery_default']))      $defaults['delivery']      = (int)$loc['id'];
+            if (!empty($loc['is_transfer_from_default'])) $defaults['transfer_from'] = (int)$loc['id'];
+            if (!empty($loc['is_transfer_to_default']))   $defaults['transfer_to']   = (int)$loc['id'];
+        }
+        $html .= '<div class="vols-form-content se-event-page se-event-' . htmlspecialchars($this->event_type) . '"'
+               . ' data-defaults="' . htmlspecialchars(json_encode($defaults)) . '">';
         $html .= '<h2 class="vols-form-pageheading">' . htmlspecialchars($this->event_label) . '</h2>';
         $html .= $this->renderbanner();
         $html .= $this->rendereventdefinition();
@@ -204,6 +215,14 @@ abstract class StockEventForm extends \fw\view\form\Form {
         return <<<'JS'
 (function() {
     var $activeInput = null;
+    var saveTimer    = null;
+
+    function schedulesave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(function() {
+            if ($activeInput) savemovement($activeInput);
+        }, 1500);
+    }
 
     // Track which qty input is active (for digit pad).
     jQuery(document).on('focus', '.se-qty', function() {
@@ -212,34 +231,68 @@ abstract class StockEventForm extends \fw\view\form\Form {
     });
 
     // Digit pad key press.
-    jQuery(document).on('click touchstart', '.se-digit-btn', function(e) {
-        e.preventDefault();
+    // touchstart and click are separated to prevent double-firing on touch browsers
+    // where click fires 300ms after touchstart even when preventDefault() was called.
+    var lastPadTouch = 0;
+
+    function handlepadkey(btn) {
         if (!$activeInput) return;
-        var key = jQuery(this).data('key');
-        var cur = $activeInput.val();
+        if (!jQuery(document.activeElement).hasClass('se-qty')) return;
+        var key = jQuery(btn).data('key');
+        var cur = String($activeInput.val());
         if (key === 'clear') {
             $activeInput.val('');
         } else if (key === 'back') {
             $activeInput.val(cur.slice(0, -1));
+        } else if (key === 'next') {
+            clearTimeout(saveTimer);
+            savemovement($activeInput);
+            var $inputs = jQuery('.se-qty:visible');
+            var $next   = $inputs.eq($inputs.index($activeInput[0]) + 1);
+            if ($next.length) { $next.focus(); } else { $activeInput.blur(); }
+            return;
+        } else if (key === 'prev') {
+            clearTimeout(saveTimer);
+            savemovement($activeInput);
+            var $inputs = jQuery('.se-qty:visible');
+            var idx     = $inputs.index($activeInput[0]);
+            var $prev   = idx > 0 ? $inputs.eq(idx - 1) : jQuery();
+            if ($prev.length) { $prev.focus(); } else { $activeInput.blur(); }
+            return;
         } else if (/^[0-9]$/.test(key)) {
-            $activeInput.val(cur + key);
+            var raw = (cur === '' || cur === '0') ? key : cur + key;
+            $activeInput.val(String(parseInt(raw, 10)));
         }
         jQuery('#se-pad-display').val($activeInput.val());
+        schedulesave();
+    }
+
+    jQuery(document).on('touchstart', '.se-digit-btn', function(e) {
+        e.preventDefault();
+        lastPadTouch = Date.now();
+        handlepadkey(this);
+    }).on('click', '.se-digit-btn', function() {
+        if (Date.now() - lastPadTouch < 500) return;
+        handlepadkey(this);
     });
 
-    // Auto-save when a qty field loses focus.
+    // Immediate save when a qty field loses focus (cancels any pending debounce).
     jQuery(document).on('blur', '.se-qty', function() {
+        clearTimeout(saveTimer);
         savemovement(jQuery(this));
     });
 
-    // Tab moves to the next qty input instead of into the digit pad.
+    // Tab / Shift+Tab move between qty inputs instead of into the digit pad.
     jQuery(document).on('keydown', '.se-qty', function(e) {
-        if (e.key !== 'Tab' || e.shiftKey) return;
+        if (e.key !== 'Tab') return;
         var $inputs = jQuery('.se-qty:visible');
-        var $next   = $inputs.eq($inputs.index(this) + 1);
-        if ($next.length) {
-            e.preventDefault();
-            $next.focus();
+        if (e.shiftKey) {
+            var idx   = $inputs.index(this);
+            var $prev = idx > 0 ? $inputs.eq(idx - 1) : jQuery();
+            if ($prev.length) { e.preventDefault(); $prev.focus(); }
+        } else {
+            var $next = $inputs.eq($inputs.index(this) + 1);
+            if ($next.length) { e.preventDefault(); $next.focus(); }
         }
     });
 
@@ -274,6 +327,14 @@ abstract class StockEventForm extends \fw\view\form\Form {
             resizestocktable();
         }
     });
+
+    // Save the active input when the user leaves the page (back button, menu nav, tab switch).
+    window.addEventListener('pagehide', function() {
+        if ($activeInput) {
+            clearTimeout(saveTimer);
+            savemovement($activeInput);
+        }
+    });
 })();
 
 function savemovement($input) {
@@ -284,6 +345,7 @@ function savemovement($input) {
     var location_id = jQuery('#se-location-id').val();
     var event_type  = jQuery('#se-event-type').val();
     if (!stock_id || !event_id) return;
+    if (value === '' && !parseInt(movement_id)) return;
     doServerRequest(0, JSON.stringify({
         stock_id:    stock_id,
         movement_id: movement_id,
@@ -310,12 +372,10 @@ function resizestocktable() {
     var $container = jQuery('#se-stock-table-container');
     if (!$container.length || !$container.is(':visible')) return;
     var containerTop = $container[0].getBoundingClientRect().top;
-    var belowHeight = 0;
-    jQuery('#se-digitpad, #se-action-buttons').each(function() {
-        belowHeight += jQuery(this).outerHeight(true) || 0;
-    });
-    var available = Math.max(200, window.innerHeight - containerTop - belowHeight - 16);
-    $container.css('max-height', available + 'px');
+    var $footer = jQuery('#footercontainer');
+    var footerTop = $footer.length ? $footer[0].getBoundingClientRect().top : window.innerHeight;
+    var available = Math.max(200, footerTop - containerTop - 4);
+    $container.css('height', available + 'px');
 }
 
 function loadstock(event_id, category_id, supplier_id) {
@@ -329,6 +389,7 @@ function loadstock(event_id, category_id, supplier_id) {
     }), 'stockevent_getstock').then(function(resp) {
         jQuery('#se-stock-table-body').html(resp);
         resizestocktable();
+        jQuery('.se-qty:visible').first().focus();
     });
 }
 
