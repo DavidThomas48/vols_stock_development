@@ -14,10 +14,7 @@ class StocktakeEventForm extends StockEventForm {
         $html  = '<div id="se-event-def" class="se-event-def">';
         $html .= '<div class="se-event-def-row">';
         $html .= $this->renderlocationselect('se-location1', 'Location', 'se-location-select');
-        $html .= '</div>';
-        $html .= '<div id="se-start-area" class="se-start-area" style="display:none">';
-        $html .= '<span id="se-status-msg" class="se-status-msg"></span>';
-        $html .= '<button type="button" id="se-start-btn" class="vols-button">Start Stocktake</button>';
+        $html .= '<button type="button" id="se-start-btn" class="vols-button" style="display:none">Start Stocktake</button>';
         $html .= '</div>';
         $html .= '</div>';
         return $html;
@@ -25,8 +22,8 @@ class StocktakeEventForm extends StockEventForm {
 
     protected function renderstocktableheader(): string {
         return '<tr>'
-             . '<th class="se-th-name">Stock Item</th>'
              . '<th class="se-th-category">Category</th>'
+             . '<th class="se-th-name">Stock Item</th>'
              . '<th class="se-th-qty">Count</th>'
              . '</tr>';
     }
@@ -41,8 +38,8 @@ class StocktakeEventForm extends StockEventForm {
         $value       = ($row['stock_qoh'] !== null && $row['stock_qoh'] !== '') ? (int)$row['stock_qoh'] : '';
 
         return '<tr class="se-stock-row" data-stock-id="' . $stock_id . '">'
-             . '<td class="se-td-name">'     . $stock_name . '</td>'
              . '<td class="se-td-category">' . $cat_name   . '</td>'
+             . '<td class="se-td-name">'     . $stock_name . '</td>'
              . '<td class="se-td-qty">'
              . '<input type="number" min="0" step="1" class="se-qty"'
              . ' data-stock-id="'    . $stock_id    . '"'
@@ -63,46 +60,28 @@ jQuery(function() {
     // Location dropdown change: check for in-progress stocktake at that location.
     jQuery('#se-location1').on('change', function() {
         var loc = jQuery(this).val();
-        jQuery('#se-start-area').hide();
+        jQuery('#se-start-btn').hide();
         jQuery('#se-event-controls').hide();
         jQuery('#se-event-id').val('');
         jQuery('#se-location-id').val('');
-
         if (!loc) return;
 
         getinprogressevent('stocktake', loc, null, null, function(r) {
             if (r.found && r.event && r.event.id) {
-                // Resume existing event.
                 jQuery('#se-event-id').val(r.event.id);
                 jQuery('#se-location-id').val(loc);
-                jQuery('#se-status-msg').text('Resuming stocktake in progress.');
-                jQuery('#se-start-btn').text('Resume Stocktake');
-                jQuery('#se-start-area').show();
                 jQuery('#se-event-controls').show();
                 loadstock(r.event.id, '');
             } else {
-                // No event yet — offer to start one.
-                jQuery('#se-status-msg').text('No stocktake in progress for this location.');
-                jQuery('#se-start-btn').text('Start Stocktake');
-                jQuery('#se-start-area').show();
+                jQuery('#se-start-btn').show();
             }
         });
     });
 
-    // Start (or resume) button.
     jQuery('#se-start-btn').on('click', function() {
         var loc = jQuery('#se-location1').val();
         if (!loc) { alert('Please select a location first.'); return; }
-
-        // If already have an event_id (resume), just load stock.
-        var existing_id = parseInt(jQuery('#se-event-id').val() || '0');
-        if (existing_id > 0) {
-            jQuery('#se-event-controls').show();
-            loadstock(existing_id, '');
-            return;
-        }
-
-        // Create a new stocktake event.
+        jQuery('#se-start-btn').hide();
         createstockevent('stocktake', loc, null, null, null, function(event_id) {
             jQuery('#se-location-id').val(loc);
             loadstock(event_id, '');

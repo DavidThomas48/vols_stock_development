@@ -17,10 +17,7 @@ class DeliveryEventForm extends StockEventForm {
         $html .= '</div>';
         $html .= '<div class="se-event-def-row">';
         $html .= $this->rendersupplierselect('se-supplier', 'Supplier');
-        $html .= '</div>';
-        $html .= '<div id="se-start-area" class="se-start-area" style="display:none">';
-        $html .= '<span id="se-status-msg" class="se-status-msg"></span>';
-        $html .= '<button type="button" id="se-start-btn" class="vols-button">Start Delivery</button>';
+        $html .= '<button type="button" id="se-start-btn" class="vols-button" style="display:none">Start Delivery</button>';
         $html .= '</div>';
         $html .= '</div>';
         return $html;
@@ -68,8 +65,8 @@ class DeliveryEventForm extends StockEventForm {
 
     protected function renderstocktableheader(): string {
         return '<tr>'
-             . '<th class="se-th-name">Stock Item</th>'
              . '<th class="se-th-category">Category</th>'
+             . '<th class="se-th-name">Stock Item</th>'
              . '<th class="se-th-qty">Qty Received</th>'
              . '</tr>';
     }
@@ -79,11 +76,11 @@ class DeliveryEventForm extends StockEventForm {
         $stock_name  = htmlspecialchars($row['stock_name']    ?? '');
         $cat_name    = htmlspecialchars($row['category_name'] ?? '');
         $movement_id = (int)($row['movement_id'] ?? 0);
-        $value       = ($row['qty'] !== null && $row['qty'] !== '') ? (int)$row['qty'] : '';
+        $value       = ($row['qty'] !== null && $row['qty'] !== '' && $row['qty'] != 0) ? (int)$row['qty'] : '';
 
         return '<tr class="se-stock-row" data-stock-id="' . $stock_id . '">'
-             . '<td class="se-td-name">'     . $stock_name . '</td>'
              . '<td class="se-td-category">' . $cat_name   . '</td>'
+             . '<td class="se-td-name">'     . $stock_name . '</td>'
              . '<td class="se-td-qty">'
              . '<input type="number" min="0" step="1" class="se-qty"'
              . ' data-stock-id="'    . $stock_id    . '"'
@@ -131,28 +128,22 @@ class DeliveryEventForm extends StockEventForm {
     }
 
     function checkdeliveryselections() {
-        var loc   = jQuery('#se-location1').val();
-        var sup   = jQuery('#se-supplier').val();
-        jQuery('#se-start-area').hide();
+        var loc = jQuery('#se-location1').val();
+        var sup = jQuery('#se-supplier').val();
+        jQuery('#se-start-btn').hide();
         jQuery('#se-event-controls').hide();
         jQuery('#se-event-id').val('');
         jQuery('#se-location-id').val('');
         if (!loc || !sup) return;
 
-        // The selected option already carries the in-progress event id — no AJAX needed.
         var event_id = parseInt(jQuery('#se-supplier option:selected').data('event-id') || '0');
         if (event_id > 0) {
             jQuery('#se-event-id').val(event_id);
             jQuery('#se-location-id').val(loc);
-            jQuery('#se-status-msg').text('Resuming delivery in progress.');
-            jQuery('#se-start-btn').text('Resume Delivery');
-            jQuery('#se-start-area').show();
             jQuery('#se-event-controls').show();
             loadstock(event_id, '', '');
         } else {
-            jQuery('#se-status-msg').text('No delivery in progress for this supplier.');
-            jQuery('#se-start-btn').text('Start Delivery');
-            jQuery('#se-start-area').show();
+            jQuery('#se-start-btn').show();
         }
     }
 
@@ -168,18 +159,18 @@ class DeliveryEventForm extends StockEventForm {
         var sup = jQuery('#se-supplier').val();
         if (!loc) { alert('Please select a receiving location.'); return; }
         if (!sup) { alert('Please select a supplier.'); return; }
-
-        var existing_id = parseInt(jQuery('#se-event-id').val() || '0');
-        if (existing_id > 0) {
-            jQuery('#se-event-controls').show();
-            loadstock(existing_id, '', '');
-            return;
-        }
-
+        jQuery('#se-start-btn').hide();
         createstockevent('delivery', loc, null, sup, null, function(event_id) {
             jQuery('#se-location-id').val(loc);
             loadstock(event_id, '', '');
         });
+    });
+
+    jQuery(document).ready(function() {
+        var defaults = jQuery('.se-event-page').data('defaults') || {};
+        if (defaults.delivery && !jQuery('#se-location1').val()) {
+            jQuery('#se-location1').val(defaults.delivery).trigger('change');
+        }
     });
 })();
 JS;

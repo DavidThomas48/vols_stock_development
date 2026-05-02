@@ -159,7 +159,6 @@ body:has(#menubutton.clickable .clicked){
 #menubutton.clickable.menu li {
     position: relative;
     list-style-type: none;
-    /*display: inline-block;*/
     width: 200px ;
     height: 4rem;
     white-space: nowrap;
@@ -168,7 +167,6 @@ body:has(#menubutton.clickable .clicked){
     overflow-y: visible;
 }
 #menubutton.clickable.menu li div.menuitem {
-    /*float: left;*/
     height: 4rem;
     display: flex;
     align-items: center;

@@ -14,10 +14,7 @@ class AdjustmentEventForm extends StockEventForm {
         $html  = '<div id="se-event-def" class="se-event-def">';
         $html .= '<div class="se-event-def-row">';
         $html .= $this->renderlocationselect('se-location1', 'Location', 'se-location-select');
-        $html .= '</div>';
-        $html .= '<div id="se-start-area" class="se-start-area" style="display:none">';
-        $html .= '<span id="se-status-msg" class="se-status-msg"></span>';
-        $html .= '<button type="button" id="se-start-btn" class="vols-button">Start Adjustment</button>';
+        $html .= '<button type="button" id="se-start-btn" class="vols-button" style="display:none">Start Adjustment</button>';
         $html .= '</div>';
         $html .= '</div>';
         return $html;
@@ -25,8 +22,8 @@ class AdjustmentEventForm extends StockEventForm {
 
     protected function renderstocktableheader(): string {
         return '<tr>'
-             . '<th class="se-th-name">Stock Item</th>'
              . '<th class="se-th-category">Category</th>'
+             . '<th class="se-th-name">Stock Item</th>'
              . '<th class="se-th-qty">Adjustment</th>'
              . '</tr>';
     }
@@ -37,11 +34,11 @@ class AdjustmentEventForm extends StockEventForm {
         $stock_name  = htmlspecialchars($row['stock_name']    ?? '');
         $cat_name    = htmlspecialchars($row['category_name'] ?? '');
         $movement_id = (int)($row['movement_id'] ?? 0);
-        $value       = ($row['qty'] !== null && $row['qty'] !== '') ? (int)$row['qty'] : '';
+        $value       = ($row['qty'] !== null && $row['qty'] !== '' && $row['qty'] != 0) ? (int)$row['qty'] : '';
 
         return '<tr class="se-stock-row" data-stock-id="' . $stock_id . '">'
-             . '<td class="se-td-name">'     . $stock_name . '</td>'
              . '<td class="se-td-category">' . $cat_name   . '</td>'
+             . '<td class="se-td-name">'     . $stock_name . '</td>'
              . '<td class="se-td-qty">'
              . '<input type="number" step="1" class="se-qty"'
              . ' data-stock-id="'    . $stock_id    . '"'
@@ -61,7 +58,7 @@ class AdjustmentEventForm extends StockEventForm {
 jQuery(function() {
     jQuery('#se-location1').on('change', function() {
         var loc = jQuery(this).val();
-        jQuery('#se-start-area').hide();
+        jQuery('#se-start-btn').hide();
         jQuery('#se-event-controls').hide();
         jQuery('#se-event-id').val('');
         jQuery('#se-location-id').val('');
@@ -71,15 +68,10 @@ jQuery(function() {
             if (r.found && r.event && r.event.id) {
                 jQuery('#se-event-id').val(r.event.id);
                 jQuery('#se-location-id').val(loc);
-                jQuery('#se-status-msg').text('Resuming adjustment in progress.');
-                jQuery('#se-start-btn').text('Resume Adjustment');
-                jQuery('#se-start-area').show();
                 jQuery('#se-event-controls').show();
                 loadstock(r.event.id, '');
             } else {
-                jQuery('#se-status-msg').text('No adjustment in progress for this location.');
-                jQuery('#se-start-btn').text('Start Adjustment');
-                jQuery('#se-start-area').show();
+                jQuery('#se-start-btn').show();
             }
         });
     });
@@ -87,14 +79,7 @@ jQuery(function() {
     jQuery('#se-start-btn').on('click', function() {
         var loc = jQuery('#se-location1').val();
         if (!loc) { alert('Please select a location first.'); return; }
-
-        var existing_id = parseInt(jQuery('#se-event-id').val() || '0');
-        if (existing_id > 0) {
-            jQuery('#se-event-controls').show();
-            loadstock(existing_id, '');
-            return;
-        }
-
+        jQuery('#se-start-btn').hide();
         createstockevent('adjustment', loc, null, null, null, function(event_id) {
             jQuery('#se-location-id').val(loc);
             loadstock(event_id, '');

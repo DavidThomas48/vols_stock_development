@@ -186,7 +186,7 @@ class RequestHandler   // extends \fw\http\RequestHandler
                             $numrows     = 0;
                             $this->manager->getstockforevent($event_id, $category_id, $results, $numrows, $supplier_id);
                             $this->viewcontroller->init($this->session, $this->managercollection, $this->errorhandler, $trace);
-                            $output = $this->viewcontroller->processajaxrequest("stockevent_getstock", $this->requestdata, $results, $errormessage, $trace);
+                            $output = $this->viewcontroller->processajaxrequest("stockevent_getstock", $d, $results, $errormessage, $trace);
                             break;
                         default: $output = "Unknown request action: ".$action;
                     }
