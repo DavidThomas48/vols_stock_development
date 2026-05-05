@@ -101,9 +101,15 @@ class ClientManager extends \fw\controller\manager\StdManager
         if ($this->trace || $trace) { echo "Leave ".__METHOD__." success=$success isadmin={$this->isadmin}<br>\n"; }
         return $success;
      }
-    public function getallrecords(&$datafields,$orderby,&$parents,&$numrows,$withlock=false,$trace=false) { 
+    public function getallrecords(&$datafields,$orderby,&$parents,&$numrows,$withlock=false,$trace=false) {
         if ($this->trace  || $trace ) { echo gtab(1)."Enter ".__METHOD__.": for {$this->name} <br>"; }
-        $success = $this->table->selectall($datafields,$numrows,$orderby,false);
+        // tandc_signature (MEDIUMTEXT) is intentionally excluded — loaded on demand via AJAX
+        $fieldlist = 'id, given_name, family_name, email, phone, address_street, address_street2, '
+                   . 'address_townsuburb, address_state, address_postcode, residence, gender, '
+                   . 'month_of_birth, year_of_birth, interpreter, language, country_of_birth, '
+                   . 'aborigine_TSislander, represented_by, carer_name, concession_card, dietary, '
+                   . 'comments, office_comments, has_read_tandc';
+        $success = $this->table->select($fieldlist, '', '', '', $orderby ?: 'given_name, family_name', 0, $datafields, $numrows, $trace);
         $success = $success && $this->getparents($parents,$trace);  // IN THE SUBCLASS
         if ($success) {
             $this->alldata = $datafields;
@@ -111,6 +117,12 @@ class ClientManager extends \fw\controller\manager\StdManager
         }
         if ($this->trace  || $trace) { echo gtab(-1)."Leave ".__METHOD__." OK? = ".$success." <br>records = ".count($datafields)."\n"; }
         return $success;
+     }
+    public function getclientsignature($client_id) {
+        $cid     = (int)$client_id;
+        $results = []; $numrows = 0;
+        $this->table->query("SELECT tandc_signature FROM client WHERE id = {$cid}", $results, $numrows, false);
+        return $results[0]['tandc_signature'] ?? '';
      }
     public function makenames($trace=false) { 
         if ($this->trace  || $trace) { echo "Enter ".__METHOD__."<br>"; }

@@ -37,6 +37,12 @@ class ConfigManager extends \fw\controller\manager\StdManager
         $data = array_combine($keys,$configrows);
         return $success;
      }
+    public function getconfigvalue($name, $default='', $trace=false) {
+        $escaped = $this->table->real_escape_string($name);
+        $results = []; $numrows = 0;
+        $this->table->query("SELECT `value` FROM config WHERE `name` = '{$escaped}' LIMIT 1", $results, $numrows, false);
+        return ($numrows > 0) ? $results[0]['value'] : $default;
+    }
     public function update(&$errormessage="",$trace=false){
         if ($this->trace || $trace ) { echo "<br>"."Enter ".__METHOD__."  <br>\n"; }
         // Config is a special case. The Config table stores one value per record, but all records are 

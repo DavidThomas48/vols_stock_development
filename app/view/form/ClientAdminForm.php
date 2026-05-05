@@ -12,9 +12,9 @@ class ClientAdminForm extends ClientForm {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
         $this->singlerecord = false;
      }
-    public function init($session,$clients=[],$parents="",$trace=false,$clientmembers=[],$clientsessions=[],$volunteers=[],$pagenum='') {
+    public function init($session,$clients=[],$parents="",$trace=false,$clientmembers=[],$clientsessions=[],$volunteers=[],$pagenum='',$tandc_text='') {
         if ($this->trace||$trace) { echo "Enter ".__METHOD__."<br>"; }
-        parent::init($session,$clients,$parents,$trace,$clientmembers,$clientsessions,$volunteers,$pagenum);
+        parent::init($session,$clients,$parents,$trace,$clientmembers,$clientsessions,$volunteers,$pagenum,$tandc_text);
         $this->attendancescript = <<<JS
 
                     const attendeeids     = makearray("#js-sessionclientids",fd) 

@@ -21,6 +21,9 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
     protected $volunteers;
     protected $config;
     protected $placenames;
+    protected $tandc_text = 'I confirm that the personal information I have provided is accurate and complete. '
+        . 'I consent to Woodend Neighbourhood House Food Bank collecting and holding this information '
+        . 'for the purpose of providing food relief services, in accordance with the Privacy Act 1988 (Cth).';
     protected $months = ["0"=>"","1"=>"Jan","2"=>"Feb","3"=>"Mar","4"=>"Apr","5"=>"May","6"=>"Jun","7"=>"Jul","8"=>"Aug","9"=>"Sep","10"=>"Oct","11"=>"Nov","12"=>"Dec"];
     protected $years = [0=>""];
     protected $states = [""=>"","NSW"=>"NSW","VIC"=>"VIC","QLD"=>"QLD","SA"=>"SA","WA"=>"WA","TAS"=>"TAS","NT"=>"NT","ACT"=>"ACT"];
@@ -32,7 +35,7 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
         $this->singlerecord = false;
      }
-    public function init($session,$clients=[],$parents="",$trace=false,$clientmembers=[],$clientsessions=[],$volsdata=[],$pagenum='') {
+    public function init($session,$clients=[],$parents="",$trace=false,$clientmembers=[],$clientsessions=[],$volsdata=[],$pagenum='',$tandc_text='') {
         if ($this->trace||$trace) { echo "Enter ".__METHOD__."<br>isadmin = $this->isadmin<br>$this->formname<br>"; }
         parent::init($session,$clients,$parents,$trace);
         $this->config = $this->session->getconfig();
@@ -47,7 +50,8 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
         for ($i=1915; $i <= date('Y'); $i++) { 
             $this->years[$i] = $i;
         }
-        $this->clientid = $this->requestdata["id"]??"";        
+        $this->clientid = $this->requestdata["id"]??"";
+        if ($tandc_text !== '') { $this->tandc_text = $tandc_text; }
      }
     protected function initfields($trace = false) { 
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
@@ -55,6 +59,7 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
                                 ,"given_name"=>""
                                 ,"family_name"=>""
                                 ,"email"=>""
+                                ,"has_read_tandc"=>""
                             );
      }
     public function addlinkstodata(&$clients=[],$clientsessions=[],$trace=false) {
@@ -243,7 +248,18 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
         //=====================================================================================================
         $formfields .= $this->component->rendersectionheading("Comments",inputgroup:"commentsgroup");
         $formfields .= $this->component->buildtextarearow("comments",22,"","Other comments","",40,3,4096); 
-        $formfields .= $this->component->buildtextarearow("office_comments",23,"","Office comments","",40,3,4096); 
+        $formfields .= $this->component->buildtextarearow("office_comments",23,"","Office comments","",40,3,4096);
+        //=====================================================================================================
+        $formfields .= $this->component->rendersectionheading("Terms &amp; Conditions");
+        $formfields .= '<div class="vols-tandc-statement">' . $this->tandc_text . '</div>';
+        $formfields .= '<input type="hidden" name="has_read_tandc" value="0">';
+        $formfields .= $this->component->buildcheckboxrow("has_read_tandc","1","",false,24,"I have read and accept the above statement",'',false,false,false,false);
+        $formfields .= '<div class="vols-tandc-sig-section">';
+        $formfields .= '<div class="vols-tandc-sig-label">Signature:</div>';
+        $formfields .= '<canvas id="sig-canvas" class="vols-tandc-canvas" width="500" height="150"></canvas>';
+        $formfields .= '<button type="button" id="sig-clear-btn" class="vols-tandc-clear-btn" disabled>Clear</button>';
+        $formfields .= '</div>';
+        $formfields .= '<input type="hidden" id="tandc_signature" name="tandc_signature" value="">';
         //=====================================================================================================
         $formfields .= $this->sessionsattended(); // exists in the subclass
         $this->preparecommontop(selecttext:$this->clientid,pagesubheading:$pagesubheading);
@@ -326,21 +342,24 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
                         deletechild(jQuery(this),event);  
                     });
                     jQuery("#address_state").val("VIC").change();
-                    {$as} 
+                    {$as}
+                    sigclear();
+                    doServerRequest(0, JSON.stringify({client_id: selectedid}), 'client_getsignature')
+                        .then(function(base64) { sigload(base64); });
                 }
                 function postclearfieldsscript(){
                     jQuery(".vols-tablecell input[type='checkbox']").prop("checked",false);
                     jQuery(".vols-tablecell input[type='radio'][name='gdr']").each(function () { $(this).prop('checked', false); });
                     jQuery("#address_state").val("VIC").change();
+                    sigclear();
                 }
                 function presavescript(){
-                    // recover the index from the 'checked' radio to 
-                    // determine the value for radio fields
                     const g = jQuery("input[type='radio'][name='gdr']:checked").val() ;
                     jQuery("#gender").val(g);
                     const c = jQuery("input[type='radio'][name='rep']:checked").val();
+                    jQuery('#tandc_signature').val(sigisempty() ? '' : sigCanvas.toDataURL('image/png'));
                 }
-                function disablescript(){}
+                function disablescript(){ sigenable(false); }
                 function onloadscript(){
                      jQuery("#address_townsuburb").on("change",function(event){
                         let pc;
@@ -430,8 +449,80 @@ class ClientForm extends \fw\view\form\StdCRUDForm {
                                     // '', // disablescript
                                     // '', //$onloadscript
                                     ); 
+        $script .= <<<'JS'
+
+            // ---- Signature pad ----
+            var sigCanvas, sigCtx, sigIsDrawing = false, sigEnabled = false;
+            function siginit() {
+                sigCanvas = document.getElementById('sig-canvas');
+                if (!sigCanvas) return;
+                sigCtx = sigCanvas.getContext('2d');
+                sigCtx.strokeStyle = '#000';
+                sigCtx.lineWidth   = 2;
+                sigCtx.lineCap     = 'round';
+                sigCtx.lineJoin    = 'round';
+                sigCanvas.addEventListener('pointerdown', function(e) {
+                    if (!sigEnabled) return;
+                    sigIsDrawing = true;
+                    var p = sigpos(e);
+                    sigCtx.beginPath();
+                    sigCtx.moveTo(p.x, p.y);
+                    e.preventDefault();
+                });
+                sigCanvas.addEventListener('pointermove', function(e) {
+                    if (!sigIsDrawing || !sigEnabled) return;
+                    var p = sigpos(e);
+                    sigCtx.lineTo(p.x, p.y);
+                    sigCtx.stroke();
+                    e.preventDefault();
+                });
+                sigCanvas.addEventListener('pointerup',    function() { sigIsDrawing = false; });
+                sigCanvas.addEventListener('pointerleave', function() { sigIsDrawing = false; });
+            }
+            function sigpos(e) {
+                var r = sigCanvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX - r.left) * (sigCanvas.width  / r.width),
+                    y: (e.clientY - r.top)  * (sigCanvas.height / r.height)
+                };
+            }
+            function sigisempty() {
+                if (!sigCtx) return true;
+                var d = sigCtx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+                for (var i = 3; i < d.length; i += 4) { if (d[i] !== 0) return false; }
+                return true;
+            }
+            function sigclear() {
+                if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+                jQuery('#tandc_signature').val('');
+            }
+            function sigenable(on) {
+                sigEnabled = on;
+                if (sigCanvas) sigCanvas.style.cursor = on ? 'crosshair' : 'default';
+                jQuery('#sig-clear-btn').prop('disabled', !on);
+            }
+            function sigload(base64) {
+                if (!sigCtx || !sigCanvas) return;
+                sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+                if (base64) {
+                    var img = new Image();
+                    img.onload = function() { sigCtx.drawImage(img, 0, 0); };
+                    img.src = base64;
+                }
+                jQuery('#tandc_signature').val(base64 || '');
+            }
+            jQuery(document).ready(function() {
+                siginit();
+                sigenable(false);
+                jQuery(document).on('click', '#editrecord', function() { sigenable(true); });
+                jQuery(document).on('click', '#newrecord',  function() { sigclear(); sigenable(true); });
+                jQuery(document).on('click', '#sig-clear-btn', function() { sigclear(); });
+            });
+            // ---- End signature pad ----
+
+JS;
         $script .= <<<JS
-            function showhidepages() { 
+            function showhidepages() {
                 setchildselectorheadingtext();
                 const element = document.getElementById("dataspace");
                 element.scrollTop = element.scrollHeight;

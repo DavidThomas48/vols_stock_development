@@ -31,7 +31,9 @@ class ClientTable extends \fw\database\table\MySQLTable
 			'concession_card' 				=>"",// 20
 			'dietary' 						=>"",// 21  
 			'comments' 						=>"",// 22
-			'office_comments'	 			=>"",
+			'office_comments'	 			=>"",// 23
+			'has_read_tandc'				=>"",// 24
+			'tandc_signature'				=>"",// 25
 		);
 		if ( $this->trace ) { echo 'Leave '.__METHOD__.'<br>'; }
 	}

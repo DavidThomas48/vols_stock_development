@@ -94,6 +94,12 @@ class ViewController {
                     $this->form->init($this->session,[],"",false,[],[]);
                     $output = "<div id='attendancedata'>".$this->form->rendersessionreport($data,$formdata)."</div>"; 
                     break;
+            case "client_getsignature":
+                    $client_id = (int)($formdata['client_id'] ?? 0);
+                    $cmgr = $this->mgrs->ClientManager();
+                    $cmgr->init($this->session);
+                    $output = $cmgr->getclientsignature($client_id);
+                    break;
             case "stockitemlocation_getstock":
                     $this->form = $this->forms->LocationForm();
                     $output = $this->form->rendertargetstable($data);
@@ -611,7 +617,10 @@ class ViewController {
             $success = $success && $c++ && $this->manager->getallclientsessions($clientsessions,$numrows,false);
             $success = $success && $c++ && $this->manager->gettodaysvolunteers($volunteers,$numrows,false);
             if ($success) {
-                $this->form->init($this->session,$data,$parents,false,$clientmembers,$clientsessions,$volunteers,$this->pagenum);
+                $cfgmgr = $this->mgrs->ConfigManager();
+                $cfgmgr->init($this->session);
+                $tandc_text = $cfgmgr->getconfigvalue('tandc_text');
+                $this->form->init($this->session,$data,$parents,false,$clientmembers,$clientsessions,$volunteers,$this->pagenum,$tandc_text);
                 $this->bodysection = $this->bodies->standardbody();
                 $this->bodysection->init($this->session,$this->form,$this->manager->getname(),"",$errormessage);
             } else {

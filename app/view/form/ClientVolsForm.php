@@ -14,9 +14,9 @@ class ClientVolsForm extends ClientForm {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
         $this->singlerecord = false;
      }
-    public function init($session,$clients=[],$parents="",$trace=false,$clientmembers=[],$clientsessions=[],$volunteers=[],$pagenum='') {
+    public function init($session,$clients=[],$parents="",$trace=false,$clientmembers=[],$clientsessions=[],$volunteers=[],$pagenum='',$tandc_text='') {
         if ($this->trace||$trace) { echo "Enter ".__METHOD__."<br>isadmin = $this->isadmin<br>$this->formname<br>"; }
-        parent::init($session,$clients,$parents,$trace,$clientmembers,$clientsessions,$volunteers,$pagenum);
+        parent::init($session,$clients,$parents,$trace,$clientmembers,$clientsessions,$volunteers,$pagenum,$tandc_text);
      }
     protected function buildpagesubheading($trace=false) {
         if ($this->trace||$trace) { echo "Enter ".__METHOD__."<br>"; }
