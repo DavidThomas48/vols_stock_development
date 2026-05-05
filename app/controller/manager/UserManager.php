@@ -102,7 +102,7 @@ class UserManager extends \fw\controller\manager\StdManager
     public    function getallrecords(&$datafields,$orderby,&$parents,&$numrows,$withlock=false, $trace=false) { 
         // we are overloading the parent's version because we do not want to load all User fields (e.g. password)
         if ($this->trace   || $trace) { echo "Enter ".__METHOD__."<br>"; }
-        $fieldselection = "id,given_name,family_name,display_name,email,mobile,username";
+        $fieldselection = "id,given_name,family_name,display_name,email,mobile,username,receives_stock_alerts";
         $whereclause = " `isadmin` = 0 ";
         $success = $this->table->select($fieldselection,$whereclause,"","","given_name,family_name",0,$datafields,$numrows,$trace);
         $success = $this->getparents($parents,false);  // IN THE SUBCLASS
@@ -355,6 +355,20 @@ class UserManager extends \fw\controller\manager\StdManager
         $success = $this->table->query($query,$emailaddresses,$numrows,false);
         if ($this->trace || $trace ) { echo "Leave ".__METHOD__." numrows = ".$numrows."<br>"; }
         return $success;
+     }
+    public    function getstockalertrecipients(&$recipients, $trace=false) {
+        if ($this->trace || $trace) { echo "Enter :".__METHOD__."<br>"; }
+        $query = "SELECT id, given_name, family_name, email FROM user WHERE receives_stock_alerts = 1";
+        $success = $this->table->query($query, $recipients, $numrows, false);
+        if ($this->trace || $trace) { echo "Leave ".__METHOD__." numrows = ".$numrows."<br>"; }
+        return $success;
+     }
+    public    function getreceivesstockalerts($user_id) {
+        $uid     = $this->table->real_escape_string($user_id);
+        $results = [];
+        $numrows = 0;
+        $this->table->query("SELECT receives_stock_alerts FROM user WHERE id = '{$uid}'", $results, $numrows, false);
+        return ($numrows > 0 && !empty($results[0]['receives_stock_alerts'])) ? 1 : 0;
      }
     public    function initemails($emailmanager=null,$trace=false){
         if ($this->trace || $trace) { echo "Enter :".__METHOD__."<br>"; }

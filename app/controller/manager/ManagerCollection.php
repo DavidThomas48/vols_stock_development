@@ -29,6 +29,9 @@ class ManagerCollection {
                                ,protected StockEventManager $stockeventmanager
                                ,protected StocktakeVarianceReportManager $stocktakevariancereportmanager
                                ,protected StockClientManager $stockclientmanager
+                               ,protected DeliveriesReportManager $deliveriesreportmanager
+                               ,protected StockSupplierCategoryManager $stocksuppliercategorymanager
+                               ,protected BelowMinimumReportManager $belowminimumreportmanager
                                ){
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>\n"; }
 	}
@@ -135,5 +138,17 @@ class ManagerCollection {
     public function StockClientManager() {
         if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
         return $this->stockclientmanager;
+    }
+    public function DeliveriesReportManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->deliveriesreportmanager;
+    }
+    public function StockSupplierCategoryManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->stocksuppliercategorymanager;
+    }
+    public function BelowMinimumReportManager() {
+        if ($this->trace ) { echo "Visit ".__METHOD__."<br>"; }
+        return $this->belowminimumreportmanager;
     }
 }

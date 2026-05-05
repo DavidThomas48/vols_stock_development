@@ -157,6 +157,20 @@ class StockEventManager extends \fw\controller\manager\StdManager
     }
 
     // =========================================================================
+    // WEIGHT SAVE  (delivery only)
+    // =========================================================================
+
+    public function saveweight($event_id, $weight, &$errormessage) {
+        $id_safe     = $this->table->real_escape_string($event_id);
+        $weight_safe = $this->table->real_escape_string($weight);
+        $weight_val  = ($weight !== '' && $weight !== null) ? "'{$weight_safe}'" : "NULL";
+        $set         = "`total_weight` = {$weight_val}";
+        $where       = "id = '{$id_safe}'";
+        $numrows     = 0;
+        return $this->table->update($set, $where, $numrows, $errormessage);
+    }
+
+    // =========================================================================
     // CLOSE EVENT  (section 2.2)
     // =========================================================================
 

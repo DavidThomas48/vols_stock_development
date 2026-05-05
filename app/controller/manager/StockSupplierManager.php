@@ -11,7 +11,8 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
     public function __construct(
         protected \apptable\StockSupplierTable         $table,
         protected \apptable\StockCategoryTable         $categorytable,
-        protected \apptable\StockSupplierCategoryTable $linktable
+        protected \apptable\StockSupplierCatLinkTable  $linktable,
+        protected \apptable\StockSupplierCategoryTable $suppliercategorytable
     ) {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }
     }
@@ -20,6 +21,7 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
         parent::init($session);
         $this->categorytable->init($this->db, $this->user_id);
         $this->linktable->init($this->db, $this->user_id);
+        $this->suppliercategorytable->init($this->db, $this->user_id);
     }
 
     // Override to inject category link fields into each supplier record and
@@ -30,15 +32,20 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
         // 1. Load all suppliers
         $success = $this->table->selectall($datafields, $numrows, "name");
 
-        // 2. Load all categories (ordered by name — must match order used in the form)
+        // 2. Load all stock categories (for the checkboxes)
         $allcategories = [];
         $catnumrows    = 0;
         $success = $success && $this->categorytable->selectall($allcategories, $catnumrows, "Name");
 
-        // 3. Load all supplier-category links
+        // 3. Load all supplier-stock-category links
         $alllinks    = [];
         $linknumrows = 0;
         $success = $success && $this->linktable->selectall($alllinks, $linknumrows);
+
+        // 4. Load all supplier categories (for the dropdown)
+        $suppliercategories = [];
+        $scnumrows          = 0;
+        $success = $success && $this->suppliercategorytable->selectall($suppliercategories, $scnumrows, "name");
 
         if ($success) {
             // Build lookup: supplier_id → [category_id, ...]
@@ -46,8 +53,7 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
             foreach ($alllinks as $link) {
                 $supplierlinks[$link["stock_supplier_id"]][] = $link["stock_category_id"];
             }
-            // Add a boolean link field per category to each supplier record.
-            // The field order here must match the checkbox order in StockSupplierForm::buildinputs().
+            // Add a boolean link field per stock category to each supplier record.
             foreach ($datafields as &$supplier) {
                 foreach ($allcategories as $cat) {
                     $linked = isset($supplierlinks[$supplier["id"]]) &&
@@ -59,15 +65,17 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
 
             $this->alldata = $datafields;
             $this->makenames($trace);
-            $parents = $allcategories;
+            $parents = [
+                'supplier_categories' => $suppliercategories,
+                'stock_categories'    => $allcategories,
+            ];
         }
 
         if ($this->trace || $trace) { echo "Leave ".__METHOD__." OK={$success} ({$numrows} rows)<br>"; }
         return $success;
     }
 
-    // Returns the categories currently linked to a given supplier.
-    // Each element must have "id" = category_id so updaten2nlinks() can compare.
+    // Returns the stock categories currently linked to a given supplier.
     protected function loadlinkedobjects($id, &$dblinkedobjs, &$numrows, $trace=false) {
         if ($this->trace || $trace) { echo "Enter ".__METHOD__."<br>"; }
         $records     = [];
@@ -80,7 +88,6 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
         return $success;
     }
 
-    // Returns all rows from the supplier-category link table (id, stock_supplier_id, stock_category_id).
     public function getallcategorylinks(&$links, &$numrows) {
         return $this->linktable->selectall($links, $numrows);
     }

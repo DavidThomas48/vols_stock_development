@@ -8,7 +8,7 @@ class StockSupplierForm extends \fw\view\form\StdCRUDForm {
     protected $hintwidth   = 20;
     protected $fields      = [];
     protected $names       = [];
-    protected $parents     = [];   // populated with all stock_categories by manager
+    protected $parents     = [];
     protected $formname    = "stocksupplierform";
     protected $objname     = "Stock Supplier";
 
@@ -21,11 +21,10 @@ class StockSupplierForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function initfields() {
-        // Only the base fields — category link fields are added dynamically by
-        // the manager and serialised into the hidden data by buildhiddendatafields().
         $this->fields = array(
-            "id"   => "",
-            "name" => "",
+            "id"                   => "",
+            "name"                 => "",
+            "supplier_category_id" => "",
         );
     }
 
@@ -34,6 +33,9 @@ class StockSupplierForm extends \fw\view\form\StdCRUDForm {
     }
 
     public function buildinputs($rights=[], $trace=false) {
+        $suppliercats = $this->parents['supplier_categories'] ?? [];
+        $stockcats    = $this->parents['stock_categories']    ?? [];
+
         $formfields  = '<div class="vols-stockmaint-header vols-stocksupplier-header">';
         $formfields .= '<span class="vols-stockmaint-icon">&#128666;</span>';
         $formfields .= '<span class="vols-stockmaint-text">Manage stock suppliers. Add or edit suppliers and specify which categories each supplier provides.</span>';
@@ -41,16 +43,28 @@ class StockSupplierForm extends \fw\view\form\StdCRUDForm {
 
         $formfields .= $this->component->buildinputrow("name", 1, "", 'Name', '', 20, 64, true, '', '');
 
-        // Category checkboxes (fnum starts at 2, after id=0 and name=1).
-        // The order MUST match the order in which StockSupplierManager::getallrecords()
-        // adds the "stockcategory{id}" fields to each supplier record.
-        $fn = 2;
+        // Supplier category dropdown (nullable)
+        $optn    = [];
+        $catdata = [];
+        if (!empty($suppliercats)) {
+            $catdata = array_combine(
+                array_column($suppliercats, "id"),
+                array_column($suppliercats, "name")
+            );
+        }
+        $formfields .= $this->component->buildselectrow(
+            "supplier_category_id", 2, 1, 'Supplier Category', $catdata, '', $optn,
+            false, false, false, false, '', false
+        );
+
+        // Stock category checkboxes — fnum starts at 3 now
+        $fn = 3;
         $hiddencheckboxes = '';
-        if (!empty($this->parents)) {
+        if (!empty($stockcats)) {
             $formfields .= $this->component->rendersectionheading("Categories supplied");
             $this->component->setwidths(35, 60, 5);
             $oddeven = 'vols-row-odd';
-            foreach ($this->parents as $cat) {
+            foreach ($stockcats as $cat) {
                 $fieldname = "link_stockcategory".$cat["id"];
                 $formfields .= $this->component->buildcheckboxrow(
                     $fieldname,

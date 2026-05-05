@@ -40,15 +40,16 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
     // Returns the <tbody> rows for the target quantities table.
     public function rendertargetstable(array $rows): string {
         if (empty($rows)) {
-            return '<tr><td colspan="3" class="loc-tgt-empty">No stock items found.</td></tr>';
+            return '<tr><td colspan="4" class="loc-tgt-empty">No stock items found.</td></tr>';
         }
         $html = '';
         foreach ($rows as $row) {
-            $stock_id   = (int)$row['stock_id'];
-            $stock_name = htmlspecialchars($row['stock_name']    ?? '');
-            $cat_name   = htmlspecialchars($row['category_name'] ?? '');
-            $cat_id     = (int)($row['category_id'] ?? 0);
-            $target_qty = ($row['target_qty'] !== null && $row['target_qty'] !== '') ? (int)$row['target_qty'] : '';
+            $stock_id    = (int)$row['stock_id'];
+            $stock_name  = htmlspecialchars($row['stock_name']    ?? '');
+            $cat_name    = htmlspecialchars($row['category_name'] ?? '');
+            $cat_id      = (int)($row['category_id'] ?? 0);
+            $target_qty  = ($row['target_qty'] !== null && $row['target_qty'] !== '' && (int)$row['target_qty'] > 0) ? (int)$row['target_qty'] : '';
+            $minimum_qty = ($row['minimum_qty'] !== null && $row['minimum_qty'] !== '') ? (int)$row['minimum_qty'] : '';
             $html .= '<tr data-category-id="' . $cat_id . '">'
                    . '<td class="loc-tgt-cat">'  . $cat_name   . '</td>'
                    . '<td class="loc-tgt-name">' . $stock_name . '</td>'
@@ -56,6 +57,11 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
                    . '<input type="number" name="sil_' . $stock_id . '" min="0" step="1"'
                    . ' class="loc-target-input" data-stock-id="' . $stock_id . '"'
                    . ' value="' . $target_qty . '">'
+                   . '</td>'
+                   . '<td class="loc-tgt-minqty">'
+                   . '<input type="number" name="min_qty_' . $stock_id . '" min="0" step="1"'
+                   . ' class="loc-minqty-input"'
+                   . ' value="' . $minimum_qty . '">'
                    . '</td>'
                    . '</tr>';
         }
@@ -78,7 +84,7 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
             $catoptionshtml .= '<option value="' . (int)$cat['id'] . '">'
                              . htmlspecialchars($cat['Name']) . '</option>';
         }
-        $catselector = '<select id="loc-category-filter" class="vols-form-select">'
+        $catselector = '<select id="loc-category-filter" class="vols-form-select nondatainput">'
                      . $catoptionshtml . '</select>';
         $formfields .= $this->component->rendersectionheading(
             'Target quantities &nbsp;&mdash;&nbsp; ' . $catselector
@@ -91,6 +97,7 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
                      . '<th class="loc-tgt-cat">Category</th>'
                      . '<th class="loc-tgt-name">Stock Item</th>'
                      . '<th class="loc-tgt-qty">Target Qty</th>'
+                     . '<th class="loc-tgt-minqty">Min Qty</th>'
                      . '</tr></thead>';
         $formfields .= '<tbody id="loc-targets-tbody"></tbody>';
         $formfields .= '</table>';
@@ -134,6 +141,9 @@ class LocationForm extends \fw\view\form\StdCRUDForm {
                             return jQuery(this).data('stock-id');
                         }).get().join(',');
                         jQuery('#sil_stock_ids').val(ids);
+                        if (!jQuery('#editrecord').hasClass('inactive')) {
+                            jQuery('#loc-targets-tbody input').prop('disabled', true);
+                        }
                         filtertargetsbycat();
                         jQuery('#loc-targets-wrapper').show();
                     });

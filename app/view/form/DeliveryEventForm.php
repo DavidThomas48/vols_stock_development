@@ -45,10 +45,20 @@ class DeliveryEventForm extends StockEventForm {
         return $html;
     }
 
+    protected function renderextraeventfields(): string {
+        $weight = isset($this->event['total_weight']) && $this->event['total_weight'] !== null
+                ? (int)$this->event['total_weight'] : '';
+        return '<div class="se-event-def-row">'
+             . '<label for="se-total-weight">Total delivery weight (kg)</label>'
+             . '<input type="number" id="se-total-weight" min="0" step="1"'
+             . ' class="se-total-weight-input" value="' . $weight . '">'
+             . '</div>';
+    }
+
     // Overrides base: adds data-supplier-ids to each category option so JS can
     // filter the list when the supplier changes.
     protected function rendercategoryfilter(): string {
-        $html  = '<div id="se-category-filter" class="se-category-filter">';
+        $html  = '<div id="se-category-filter" class="se-event-def-row">';
         $html .= '<label for="se-category">Filter by category:</label>';
         $html .= '<select id="se-category">';
         $html .= '<option value="">All categories</option>';
@@ -164,6 +174,12 @@ class DeliveryEventForm extends StockEventForm {
             jQuery('#se-location-id').val(loc);
             loadstock(event_id, '', '');
         });
+    });
+
+    jQuery(document).on('change', '#se-total-weight', function() {
+        var event_id = jQuery('#se-event-id').val();
+        if (!event_id) return;
+        doServerRequest(0, JSON.stringify({event_id: event_id, weight: jQuery(this).val()}), 'stockevent_saveweight');
     });
 
     jQuery(document).ready(function() {

@@ -20,7 +20,8 @@ class RosterReview {
     protected $indent8 = "&nbsp; &nbsp; &nbsp; &nbsp; ";
     private $display = true;
     private $noemails = false; // don't send any vol emails
-    private $testing = false; // send report and vol emails to me 
+    private $testing = false; // send report and vol emails to me
+    protected $belowminimumreportmanager;
     public function __construct(protected \fw\exception\ErrorHandler $errorhandler,
                                 protected \database\MySqlDB $db,
                                 protected \fw\session\WebSession $session ,
@@ -53,9 +54,11 @@ class RosterReview {
             $this->usermanager = $this->managercollection->usermanager();
             $this->sessionmanager = $this->managercollection->sessionmanager();
             $this->emailmanager = $this->managercollection->emailmanager();
+            $this->belowminimumreportmanager = $this->managercollection->BelowMinimumReportManager();
             $this->usermanager->init($this->session);
             $this->emailmanager->init($this->session);
             $this->sessionmanager->init($this->session);
+            $this->belowminimumreportmanager->init($this->session);
             $this->taskextendermanger->init($this->session);
             $this->sessiontable->init($this->db);
             $this->bookingtable->init($this->db);
@@ -65,7 +68,7 @@ class RosterReview {
             die('Caught exception in  RosterReview : '.$e->getMessage());
         }
      }
-    public  function do_review($doshortfall=true,$dodigest=true,$domaintainrosters=true,$docheckuserroles=true,$dochecksessionroles=true,$sendreport=true,$data=[],$trace=false){
+    public  function do_review($doshortfall=true,$dodigest=true,$domaintainrosters=true,$docheckuserroles=true,$dochecksessionroles=true,$sendreport=true,$data=[],$trace=false,$dostockalerts=true){
         if ($this->trace || $trace ) { echo "Enter ".__METHOD__."<br>"; }
         try {
             $this->init();
@@ -76,10 +79,11 @@ class RosterReview {
             }
             // if(date('D') == $this->config["app"]["PUBLISHDAY"]) { // Date format 'D' = short Dayname e.g. "Sun"
                 $task_id =  $data["task_id"]??0;
-                $result = $domaintainrosters && $this->taskextendermanger->extendsessions($task_id,$this->errorhandler,$this->trace||$trace); // extend the roster and publish sessions as required 
+                $result = $domaintainrosters && $this->taskextendermanger->extendsessions($task_id,$this->errorhandler,$this->trace||$trace); // extend the roster and publish sessions as required
             // }
             $result = $docheckuserroles && $this->checkuserroles($trace);
             $result = $dochecksessionroles && $this->checksessionroles($trace);
+            $result = $dostockalerts && $this->checkstockalerts($trace);
             $result = $sendreport && $this->sendreport();
         } catch (\Exception $e) {
             $result =  'Caught exception: '.$e->getMessage();
@@ -398,6 +402,118 @@ class RosterReview {
         if ($this->trace || $trace ) { echo "Leave ".__METHOD__."<br>";} 
         return $success;
      }
+
+//================================================================== STOCK ALERTS
+    private function checkstockalerts($trace = false) {
+        if ($this->trace || $trace) { echo "Enter ".__METHOD__."<br>"; }
+        $this->report .= date('Y-m-d H:i:s').": running checkstockalerts(){$this->nl}";
+
+        $items = []; $parents = []; $numrows = 0;
+        $this->belowminimumreportmanager->getallrecords($items, '', $parents, $numrows, false, $trace);
+
+        if ($numrows === 0) {
+            $this->report .= $this->indent8."No stock items below minimum.{$this->nl}";
+            $this->report .= date('Y-m-d H:i:s').": leaving checkstockalerts(){$this->nl}";
+            return true;
+        }
+
+        $this->report .= $this->indent8."{$numrows} stock item(s) below minimum:{$this->nl}";
+        foreach ($items as $item) {
+            $this->report .= $this->indent8
+                . htmlspecialchars($item['category_name']) . ' &mdash; '
+                . htmlspecialchars($item['Name'])
+                . ' (' . htmlspecialchars($item['location_name']) . ')'
+                . ': current&nbsp;' . (int)$item['current_qty']
+                . ', minimum&nbsp;' . (int)$item['minimum_qty']
+                . ', shortfall&nbsp;' . abs((int)$item['variance'])
+                . $this->nl;
+        }
+
+        $success = $this->usermanager->getstockalertrecipients($recipients, $trace);
+        if (!$success || empty($recipients)) {
+            $this->report .= $this->indent8."No stock alert recipients configured.{$this->nl}";
+            $this->report .= date('Y-m-d H:i:s').": leaving checkstockalerts(){$this->nl}";
+            return true;
+        }
+
+        $asofdate = date('j F Y');
+
+        $text_rows = $html_rows = '';
+        foreach ($items as $item) {
+            $shortfall = abs((int)$item['variance']);
+            $text_rows .= sprintf(
+                "  %-30s %-25s %-20s  %7d  %7d  %8d\n",
+                $item['category_name'],
+                $item['Name'],
+                $item['location_name'],
+                (int)$item['current_qty'],
+                (int)$item['minimum_qty'],
+                $shortfall
+            );
+            $html_rows .= '<tr>'
+                . '<td style="padding:3px 8px">' . htmlspecialchars($item['category_name'])  . '</td>'
+                . '<td style="padding:3px 8px">' . htmlspecialchars($item['Name'])           . '</td>'
+                . '<td style="padding:3px 8px">' . htmlspecialchars($item['location_name'])  . '</td>'
+                . '<td style="padding:3px 8px;text-align:right">' . (int)$item['current_qty'] . '</td>'
+                . '<td style="padding:3px 8px;text-align:right">' . (int)$item['minimum_qty'] . '</td>'
+                . '<td style="padding:3px 8px;text-align:right;color:#cc0000">' . $shortfall   . '</td>'
+                . '</tr>';
+        }
+
+        $html_table = '<table style="border-collapse:collapse;font-size:0.95em">'
+            . '<thead><tr style="background:#f0f0f0">'
+            . '<th style="padding:4px 8px;text-align:left">Category</th>'
+            . '<th style="padding:4px 8px;text-align:left">Stock Item</th>'
+            . '<th style="padding:4px 8px;text-align:left">Location</th>'
+            . '<th style="padding:4px 8px;text-align:right">Current</th>'
+            . '<th style="padding:4px 8px;text-align:right">Minimum</th>'
+            . '<th style="padding:4px 8px;text-align:right">Shortfall</th>'
+            . '</tr></thead>'
+            . '<tbody>' . $html_rows . '</tbody></table>';
+
+        $emaillist = '';
+        foreach ($recipients as $user) {
+            $html = $this->heading["html"]
+                . '<p>Dear ' . htmlspecialchars($user['given_name']) . ',</p>'
+                . '<p>The following stock items are below their minimum quantities as at ' . $asofdate . ':</p>'
+                . $html_table
+                . $this->footer["html"];
+
+            $text = $this->heading["text"]
+                . "\nDear {$user['given_name']},\n\n"
+                . "The following stock items are below their minimum quantities as at {$asofdate}:\n\n"
+                . sprintf("  %-30s %-25s %-20s  %7s  %7s  %8s\n", 'Category', 'Stock Item', 'Location', 'Current', 'Minimum', 'Shortfall')
+                . str_repeat('-', 105) . "\n"
+                . $text_rows
+                . "\n" . $this->footer["text"];
+
+            $email = [];
+            $email['Subject']  = 'Stock Alert: Items Below Minimum';
+            $email['TextPart'] = $text;
+            $email['HTMLPart'] = $html;
+            if ($this->testing) {
+                $email['To'] = [['Email' => 'david.thomas@elliott-thomas.com.au', 'Name' => 'dt']];
+            } else {
+                $email['To'] = [['Email' => $user['email'], 'Name' => $user['given_name'] . ' ' . $user['family_name']]];
+            }
+
+            if (!$this->noemails) {
+                $responsestr = '';
+                $this->emailmanager->sendmail($email, $user['id'], 0, $responsestr, $this->errorhandler, ($this->trace || $trace));
+                $emaillist .= "{$user['given_name']} {$user['family_name']} at {$user['email']},{$this->nl}";
+            }
+        }
+
+        if ($this->noemails) {
+            $this->report .= $this->indent8."Stock alert emails not sent (noemails=true).{$this->nl}";
+        } else {
+            $this->report .= $this->indent8."Stock alert emails sent to: {$this->nl}{$emaillist}";
+        }
+
+        $this->report .= date('Y-m-d H:i:s').": leaving checkstockalerts(){$this->nl}";
+        if ($this->trace || $trace) { echo "Leave ".__METHOD__."<br>"; }
+        return true;
+    }
 
 //================================================================== END
 

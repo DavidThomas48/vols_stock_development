@@ -39,6 +39,9 @@ class FormCollection {
                                ,protected AdjustmentEventForm $adjustmenteventform
                                ,protected StocktakeVarianceReportForm $stocktakevariancereportform
                                ,protected StockClientForm $stockclientform
+                               ,protected DeliveriesReportForm $deliveriesreportform
+                               ,protected StockSupplierCategoryForm $stocksuppliercategoryform
+                               ,protected BelowMinimumReportForm $belowminimumreportform
                                 // ,protected SessionListForm $SessionList
                             ){
         if ($this->trace ) { echo "Enter ".__METHOD__."<br>\n"; }
@@ -150,5 +153,14 @@ class FormCollection {
     }
     public function StockClientForm() {
         return $this->stockclientform;
+    }
+    public function DeliveriesReportForm() {
+        return $this->deliveriesreportform;
+    }
+    public function StockSupplierCategoryForm() {
+        return $this->stocksuppliercategoryform;
+    }
+    public function BelowMinimumReportForm() {
+        return $this->belowminimumreportform;
     }
 }

@@ -37,22 +37,19 @@ class MenuManager  extends \fw\controller\manager\StdManager
     const MENUITEMPAGE      = 501;
     const LOGOUTPAGE        = 999;
     // Stock management pages
-    const STOCKCATEGORYPAGE    = 401;
-    const STOCKPAGE            = 402;
-    const STOCKTAKEPAGE        = 403;
-    const DELIVERYPAGE         = 404;
-    const STOCKOUTPAGE         = 405;
-    const STOCKLEVELREPORTPAGE = 406;
-    const DAMAGEDSTOCKPAGE     = 407;
-    const STOCKUSAGEREPORTPAGE = 408;
+    const LOCATIONPAGE              = 409;
+    const STOCKCATEGORYPAGE         = 401;
+    const STOCKSUPPLIERPAGE         = 410;
+    const STOCKCLIENTPAGE           = 415;
+    const STOCKSUPPLIERCATEGORYPAGE = 416;
+    const STOCKPAGE                 = 402;
     // Stock event module pages
-    const LOCATIONPAGE         = 409;
-    const STOCKSUPPLIERPAGE    = 410;
-    const STOCKTAKEEVENTPAGE   = 411;
     const DELIVERYEVENTPAGE    = 412;
     const TRANSFEREVENTPAGE    = 413;
     const ADJUSTMENTEVENTPAGE  = 414;
-    const STOCKCLIENTPAGE      = 415;
+    const STOCKTAKEEVENTPAGE   = 411;
+    // Stock report page
+    const STOCKLEVELREPORTPAGE = 406;
     private $pagenumbers = ["0"=>"Submenu Heading"];
     private $c2v;
     protected $name = "Menuitem";

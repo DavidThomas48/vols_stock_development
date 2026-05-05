@@ -157,6 +157,16 @@ class RequestHandler   // extends \fw\http\RequestHandler
                             $success = $this->manager->savemovement($stock_id, $event_id, $location_id, $value, $event_type, $movement_id, $errormsg);
                             $output = json_encode(['success' => $success, 'movement_id' => $movement_id, 'error' => $errormsg]);
                             break;
+                        case "stockevent_saveweight":
+                            $this->manager = $this->managercollection->StockEventManager();
+                            $this->manager->init($this->session);
+                            $d        = json_decode($this->requestdata["thedata"] ?? '{}', true);
+                            $event_id = $d["event_id"] ?? 0;
+                            $weight   = $d["weight"]   ?? '';
+                            $errormsg = '';
+                            $success  = $this->manager->saveweight($event_id, $weight, $errormsg);
+                            $output   = json_encode(['success' => $success, 'error' => $errormsg]);
+                            break;
                         case "stockevent_closeevent":
                             $this->manager = $this->managercollection->StockEventManager();
                             $this->manager->init($this->session);

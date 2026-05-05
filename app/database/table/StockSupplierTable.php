@@ -8,9 +8,15 @@ class StockSupplierTable extends \fw\database\table\MySQLTable
         if ($this->trace) { echo 'Enter '.__METHOD__.'<br>'; }
         parent::init($db, $user_id);
         $this->fields = array(
-            "id"   => "",
-            "name" => "",
+            "id"                   => "",
+            "name"                 => "",
+            "supplier_category_id" => null,
         );
         if ($this->trace) { echo 'Leave '.__METHOD__.'<br>'; }
+    }
+
+    public function clear() {
+        parent::clear();
+        $this->fields['supplier_category_id'] = null;
     }
 }

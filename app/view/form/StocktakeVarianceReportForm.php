@@ -52,6 +52,8 @@ class StocktakeVarianceReportForm extends \fw\view\form\StdCRUDForm {
         $rtype .= '<option value="stocklevels">Stock Levels</option>';
         $rtype .= '<option value="stocktakevariance" selected>Stocktake Variance</option>';
         $rtype .= '<option value="usagereport">Usage Report</option>';
+        $rtype .= '<option value="deliveriesreport">Deliveries Report</option>';
+        $rtype .= '<option value="belowminimumreport">Low Stock</option>';
         $rtype .= '</select>';
         $rtype .= '</form>';
 

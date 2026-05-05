@@ -38,11 +38,17 @@ class StockManager extends \fw\controller\manager\StdManager
         if ($success) {
             $qtyindex = [];
             foreach ($allqtys as $q) {
-                $qtyindex[$q['stock_id']][$q['stock_location_id']] = $q['target_qty'];
+                $qtyindex[$q['stock_id']][$q['stock_location_id']] = [
+                    'target_qty'       => $q['target_qty'],
+                    'minimum_qty' => $q['minimum_qty'],
+                ];
             }
             foreach ($datafields as &$row) {
                 foreach ($alllocations as $loc) {
-                    $row['target_qty_' . $loc['id']] = $qtyindex[$row['id']][$loc['id']] ?? '';
+                    $row['target_qty_' . $loc['id']] = $qtyindex[$row['id']][$loc['id']]['target_qty'] ?? '';
+                }
+                foreach ($alllocations as $loc) {
+                    $row['min_qty_' . $loc['id']] = $qtyindex[$row['id']][$loc['id']]['minimum_qty'] ?? '';
                 }
             }
             unset($row);
@@ -64,20 +70,32 @@ class StockManager extends \fw\controller\manager\StdManager
     }
 
     private function savetargetqtys($stock_id, &$errormessage) {
+        $loc_vals = [];
         foreach ($this->requestdata as $key => $value) {
-            if (substr($key, 0, 11) !== 'target_qty_') { continue; }
-            $loc_id = substr($key, 11);
-            if (!ctype_digit($loc_id)) { continue; }
-            $sid = $this->stockitemlocationtable->real_escape_string($stock_id);
-            $lid = $this->stockitemlocationtable->real_escape_string($loc_id);
-            $qty = trim($value);
-            if ($qty !== '' && (int)$qty > 0) {
-                if (!$this->stockitemlocationtable->upsert($sid, $lid, (int)$qty, $errormessage)) {
-                    return false;
-                }
-            } else {
+            if (substr($key, 0, 11) === 'target_qty_') {
+                $loc_id = substr($key, 11);
+                if (!ctype_digit($loc_id)) continue;
+                $loc_vals[$loc_id]['tqty'] = trim($value);
+            } elseif (substr($key, 0, 8) === 'min_qty_') {
+                $loc_id = substr($key, 8);
+                if (!ctype_digit($loc_id)) continue;
+                $loc_vals[$loc_id]['mqty'] = trim($value);
+            }
+        }
+        foreach ($loc_vals as $loc_id => $vals) {
+            $tqty = $vals['tqty'] ?? '';
+            $mqty = $vals['mqty'] ?? '';
+            $sid  = $this->stockitemlocationtable->real_escape_string($stock_id);
+            $lid  = $this->stockitemlocationtable->real_escape_string($loc_id);
+            if ($tqty === '' && $mqty === '') {
                 $numrows = 0;
                 $this->stockitemlocationtable->delete("stock_id='{$sid}' AND stock_location_id='{$lid}'", $numrows);
+            } else {
+                $tval = ($tqty !== '') ? (int)$tqty : null;
+                $mval = ($mqty !== '') ? (int)$mqty : null;
+                if (!$this->stockitemlocationtable->upsertboth($sid, $lid, $tval, $mval, $errormessage)) {
+                    return false;
+                }
             }
         }
         return true;

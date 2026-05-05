@@ -188,6 +188,8 @@ class StockLevelReportForm extends \fw\view\form\StdCRUDForm {
         $rtype .= '<option value="stocklevels" selected>Stock Levels</option>';
         $rtype .= '<option value="stocktakevariance">Stocktake Variance</option>';
         $rtype .= '<option value="usagereport">Usage Report</option>';
+        $rtype .= '<option value="deliveriesreport">Deliveries Report</option>';
+        $rtype .= '<option value="belowminimumreport">Low Stock</option>';
         $rtype .= '</select>';
         $rtype .= '</form>';
         // noselection=true, noactionrow=true — pure read-only display

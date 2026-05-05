@@ -111,7 +111,7 @@ abstract class StockEventForm extends \fw\view\form\Form {
     }
 
     protected function rendercategoryfilter(): string {
-        $html  = '<div id="se-category-filter" class="se-category-filter">';
+        $html  = '<div id="se-category-filter" class="se-event-def-row">';
         $html .= '<label for="se-category">Filter by category:</label>';
         $html .= '<select id="se-category">';
         $html .= '<option value="">All categories</option>';
@@ -153,6 +153,9 @@ abstract class StockEventForm extends \fw\view\form\Form {
         return $html;
     }
 
+    // Override in subclass to inject extra fields into se-event-controls (e.g. total_weight).
+    protected function renderextraeventfields(): string { return ''; }
+
     // The "event controls" section: category filter, stock table, digit pad, Close/Cancel buttons.
     // Hidden on initial page load when no event is in progress; shown by JS after event is created.
     private function rendereventcontrols(): string {
@@ -165,6 +168,7 @@ abstract class StockEventForm extends \fw\view\form\Form {
         $html .= '<input type="hidden" id="se-event-type"  value="' . htmlspecialchars($this->event_type) . '">';
         $html .= '<input type="hidden" id="se-location-id" value="">';  // set by JS after event definition
 
+        $html .= $this->renderextraeventfields();
         $html .= $this->rendercategoryfilter();
 
         $html .= '<div class="se-stock-and-pad">';
@@ -240,7 +244,6 @@ abstract class StockEventForm extends \fw\view\form\Form {
 
     function handlepadkey(btn) {
         if (!$activeInput) return;
-        if (!jQuery(document.activeElement).hasClass('se-qty')) return;
         var key = jQuery(btn).data('key');
         var cur = String($activeInput.val());
         if (key === 'clear') {
@@ -376,8 +379,8 @@ function resizestocktable() {
     if (!$container.length || !$container.is(':visible')) return;
     var containerTop = $container[0].getBoundingClientRect().top;
     var $footer = jQuery('#footercontainer');
-    var footerTop = $footer.length ? $footer[0].getBoundingClientRect().top : window.innerHeight;
-    var available = Math.max(200, footerTop - containerTop - 4);
+    var footerHeight = $footer.length ? $footer.outerHeight() : 0;
+    var available = Math.max(200, window.innerHeight - containerTop - footerHeight - 4);
     $container.css('height', available + 'px');
 }
 

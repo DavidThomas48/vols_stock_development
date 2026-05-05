@@ -132,8 +132,9 @@ class ViewController {
         $errormessage .= ($errormessage==""?"":"<br><br>").$processerrormessage;
         $success = $this->prepareHTMLbody($errormessage,$trace); // do this first to catch when login is required
          if ($success) {// any errormessage will be displayed in form
-            $menu  = $this->menumanager->buildmenu ($this->pagenum,$this->rights,$this->isadmin,$this->user_menu_number); 
-            $body  = $this->bodysection->render($this->pagenum,$this->rights,$this->isadmin,$menu,$errormessage,$trace);  
+            $menu  = $this->menumanager->buildmenu ($this->pagenum,$this->rights,$this->isadmin,$this->user_menu_number);
+            $stockalertpopup = $this->user_id ? $this->buildstockalertpopup() : '';
+            $body  = $this->bodysection->render($this->pagenum,$this->rights,$this->isadmin,$menu,$errormessage,$trace,'',$stockalertpopup);
             $head  = $this->headsection->render($this->pagenum,$this->multiselect,$trace);
             if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
             return $this->doctype."\r\n<html lang='en-AU'>\r\n".$head.$body."</html>";
@@ -206,21 +207,17 @@ class ViewController {
             case $c2v($mm::SESSIONPAGE)     : $this->setthispage(0,$this->pagenum,$this->mgrs->SessionManager(),$this->forms->SessionForm(),$errormessage,"task_id, start",$trace);break;
             case $c2v($mm::MENUITEMPAGE)    : $this->setthispage(0,$this->pagenum,$this->mgrs->MenuManager(),$this->forms->MenuItemForm(),$errormessage,"menucode",$trace);break;
             case $c2v($mm::CONFIGPAGE)      : $this->setthispage(0,$this->pagenum,$this->mgrs->ConfigManager(),$this->forms->ConfigForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::STOCKCATEGORYPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockCategoryManager(),$this->forms->StockCategoryForm(),$errormessage,"Name",$trace);break;
-            case $c2v($mm::STOCKPAGE)       : $this->setthispage(0,$this->pagenum,$this->mgrs->StockManager(),$this->forms->StockForm(),$errormessage,"Name",$trace);break;
-            case $c2v($mm::STOCKTAKEPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StocktakeManager(),$this->forms->StocktakeForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::DELIVERYPAGE)    : $this->setthispage(0,$this->pagenum,$this->mgrs->DeliveryManager(),$this->forms->DeliveryForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::STOCKOUTPAGE)       : $this->setthispage(0,$this->pagenum,$this->mgrs->StockoutManager(),$this->forms->StockoutForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::STOCKLEVELREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockLevelReportManager(),$this->forms->StockLevelReportForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::DAMAGEDSTOCKPAGE)    : $this->setthispage(0,$this->pagenum,$this->mgrs->DamagedStockManager(),$this->forms->DamagedStockForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::STOCKUSAGEREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockUsageReportManager(),$this->forms->StockUsageReportForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::LOCATIONPAGE)        : $this->setthispage(0,$this->pagenum,$this->mgrs->LocationManager(),$this->forms->LocationForm(),$errormessage,"name",$trace);break;
-            case $c2v($mm::STOCKSUPPLIERPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockSupplierManager(),$this->forms->StockSupplierForm(),$errormessage,"name",$trace);break;
-            case $c2v($mm::STOCKCLIENTPAGE)     : $this->setthispage(0,$this->pagenum,$this->mgrs->StockClientManager(),$this->forms->StockClientForm(),$errormessage,"name",$trace);break;
-            case $c2v($mm::STOCKTAKEEVENTPAGE)  : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->StocktakeEventForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::DELIVERYEVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->DeliveryEventForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::TRANSFEREVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->TransferEventForm(),$errormessage,"",$trace);break;
-            case $c2v($mm::ADJUSTMENTEVENTPAGE) : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->AdjustmentEventForm(),$errormessage,"",$trace);break;
+                case $c2v($mm::STOCKCATEGORYPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockCategoryManager(),$this->forms->StockCategoryForm(),$errormessage,"Name",$trace);break;
+                case $c2v($mm::STOCKPAGE)       : $this->setthispage(0,$this->pagenum,$this->mgrs->StockManager(),$this->forms->StockForm(),$errormessage,"Name",$trace);break;
+                case $c2v($mm::STOCKLEVELREPORTPAGE): $this->setthispage(0,$this->pagenum,$this->mgrs->StockLevelReportManager(),$this->forms->StockLevelReportForm(),$errormessage,"",$trace);break;
+                case $c2v($mm::LOCATIONPAGE)        : $this->setthispage(0,$this->pagenum,$this->mgrs->LocationManager(),$this->forms->LocationForm(),$errormessage,"name",$trace);break;
+                case $c2v($mm::STOCKSUPPLIERCATEGORYPAGE) : $this->setthispage(0,$this->pagenum,$this->mgrs->StockSupplierCategoryManager(),$this->forms->StockSupplierCategoryForm(),$errormessage,"name",$trace);break;
+                case $c2v($mm::STOCKSUPPLIERPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockSupplierManager(),$this->forms->StockSupplierForm(),$errormessage,"name",$trace);break;
+                case $c2v($mm::STOCKCLIENTPAGE)     : $this->setthispage(0,$this->pagenum,$this->mgrs->StockClientManager(),$this->forms->StockClientForm(),$errormessage,"name",$trace);break;
+                case $c2v($mm::STOCKTAKEEVENTPAGE)  : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->StocktakeEventForm(),$errormessage,"",$trace);break;
+                case $c2v($mm::DELIVERYEVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->DeliveryEventForm(),$errormessage,"",$trace);break;
+                case $c2v($mm::TRANSFEREVENTPAGE)   : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->TransferEventForm(),$errormessage,"",$trace);break;
+                case $c2v($mm::ADJUSTMENTEVENTPAGE) : $this->setthispage(0,$this->pagenum,$this->mgrs->StockEventManager(),$this->forms->AdjustmentEventForm(),$errormessage,"",$trace);break;
             default: die(__METHOD__." Unknown pagenum : {$this->pagenum}");
         }
        if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
@@ -279,19 +276,14 @@ class ViewController {
             case $c2v($mm::SESSIONPAGE)           :$success = $this->prepare_session_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::MENUITEMPAGE)          :$success = $this->prepare_menuitem_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::CONFIGPAGE)            :$success = $this->prepare_config_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::STOCKTAKEPAGE)         :$success = $this->prepare_stocktake_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::DELIVERYPAGE)          :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::STOCKOUTPAGE)          :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
             case $c2v($mm::STOCKLEVELREPORTPAGE)  :$success = $this->prepare_stocklevelreport_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::DAMAGEDSTOCKPAGE)      :$success = $this->prepare_stockmovement_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::STOCKUSAGEREPORTPAGE) :$success = $this->prepare_stockusagereport_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::LOCATIONPAGE)        :$success = $this->prepare_location_body($user_id,$errormessage,$trace); break;
-            case $c2v($mm::STOCKCLIENTPAGE)     :$success = $this->prepare_std_body($user_id,"name",$errormessage,$trace); break;
-            case $c2v($mm::STOCKTAKEEVENTPAGE)  :
-            case $c2v($mm::DELIVERYEVENTPAGE)   :
-            case $c2v($mm::TRANSFEREVENTPAGE)   :
-            case $c2v($mm::ADJUSTMENTEVENTPAGE) :$success = $this->prepare_stockevent_body($user_id,$errormessage,$trace); break;
-            default                                         :$success = $this->prepare_std_body($user_id,$this->orderby,$errormessage,$trace);
+            case $c2v($mm::LOCATIONPAGE)          :$success = $this->prepare_location_body($user_id,$errormessage,$trace); break;
+            case $c2v($mm::STOCKCLIENTPAGE)       :$success = $this->prepare_std_body($user_id,"name",$errormessage,$trace); break;
+            case $c2v($mm::STOCKTAKEEVENTPAGE)    :
+            case $c2v($mm::DELIVERYEVENTPAGE)     :
+            case $c2v($mm::TRANSFEREVENTPAGE)     :
+            case $c2v($mm::ADJUSTMENTEVENTPAGE)   :$success = $this->prepare_stockevent_body($user_id,$errormessage,$trace); break;
+            default                               :$success = $this->prepare_std_body($user_id,$this->orderby,$errormessage,$trace);
         }
         if ($this->trace ) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
         return $success;
@@ -890,9 +882,33 @@ class ViewController {
         if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }
         try {
             $report_type = $this->requestdata['report_type'] ?? 'stocklevels';
-            if (!in_array($report_type, ['stocklevels', 'stocktakevariance', 'usagereport'])) $report_type = 'stocklevels';
+            if (!in_array($report_type, ['stocklevels', 'stocktakevariance', 'usagereport', 'deliveriesreport', 'belowminimumreport'])) $report_type = 'stocklevels';
 
-            if ($report_type === 'usagereport') {
+            if ($report_type === 'deliveriesreport') {
+                $this->manager = $this->mgrs->DeliveriesReportManager();
+                $this->manager->init($this->session, $trace);
+                $this->form = $this->forms->DeliveriesReportForm();
+
+                $from        = $this->requestdata['from']        ?? '';
+                $to          = $this->requestdata['to']          ?? '';
+                $supplier_id = $this->requestdata['supplier_id'] ?? '';
+                $category_id = $this->requestdata['category_id'] ?? '';
+                if ($from        && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $from))  $from        = '';
+                if ($to          && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to))    $to          = '';
+                if ($supplier_id && !preg_match('/^\d+$/', $supplier_id))          $supplier_id = '';
+                if ($category_id && !preg_match('/^\d+$/', $category_id))          $category_id = '';
+                $this->manager->setfilters($from, $to, $supplier_id, $category_id);
+
+                $include_items = !empty($this->requestdata['include_items']) && $this->requestdata['include_items'] === '1';
+            } elseif ($report_type === 'belowminimumreport') {
+                $this->manager = $this->mgrs->BelowMinimumReportManager();
+                $this->manager->init($this->session, $trace);
+                $this->form = $this->forms->BelowMinimumReportForm();
+
+                $location_id = $this->requestdata['location_id'] ?? '';
+                if (!preg_match('/^\d*$/', $location_id)) $location_id = '';
+                $this->manager->setlocation($location_id);
+            } elseif ($report_type === 'usagereport') {
                 $this->manager = $this->mgrs->StockUsageReportManager();
                 $this->manager->init($this->session, $trace);
                 $this->form = $this->forms->StockUsageReportForm();
@@ -933,6 +949,7 @@ class ViewController {
             $success = $this->manager->getallrecords($data, "", $parents, $numrows, false, $trace);
             if ($success) {
                 $parents['report_type'] = $report_type;
+                if ($report_type === 'deliveriesreport') $parents['include_items'] = $include_items ?? false;
                 $this->form->init($this->session, $data, $parents, false);
                 $this->bodysection = $this->bodies->standardbody();
                 $this->bodysection->init($this->session, $this->form, "Stock Reports", "", $errormessage);
@@ -947,6 +964,35 @@ class ViewController {
         }
         if ($this->trace || $trace) { echo gtab(-1)."Leave ".__METHOD__."<br>\n"; }
         return true;
+     }
+    private function buildstockalertpopup(): string {
+        try {
+            if (!$this->usermanager->getreceivesstockalerts($this->user_id)) return '';
+            $today = date('Y-m-d');
+            if (($_SESSION['stock_alert_date'] ?? '') === $today) return '';
+            $belmgr = $this->mgrs->BelowMinimumReportManager();
+            $belmgr->init($this->session);
+            $items = []; $parents = []; $numrows = 0;
+            $belmgr->getallrecords($items, '', $parents, $numrows, false, false);
+            if (empty($items)) return '';
+            $_SESSION['stock_alert_date'] = $today;
+            $count = count($items);
+            $n     = $count === 1;
+            $mm    = $this->menumanager;
+            $url   = '?p=' . $mm::STOCKLEVELREPORTPAGE . '&report_type=belowminimumreport';
+            $html  = '<div id="stockalertdialog" style="display:none;" title="Low Stock Alert">';
+            $html .= '<p>' . $count . ' stock ' . ($n ? 'item is' : 'items are') . ' currently below minimum quantity.</p>';
+            $html .= '<p style="text-align:center"><button type="button" onclick="window.location=\'' . $url . '\'">View the Low Stock report &rarr;</button></p>';
+            $html .= '</div>';
+            $html .= '<script>jQuery(function($){'
+                  .  '$("#stockalertdialog").dialog({modal:true,autoOpen:true,width:420,'
+                  .  'buttons:[{text:"View Report",click:function(){window.location="' . $url . '";}}'
+                  .  ',{text:"Close",click:function(){$(this).dialog("close");}}]});'
+                  .  '});</script>';
+            return $html;
+        } catch (\Exception $e) {
+            return '';
+        }
      }
     private function prepare_stockusagereport_body($user_id,&$errormessage,$trace=false) {
         if ($this->trace || $trace) { echo gtab(1)."Enter ".__METHOD__."<br>"; }

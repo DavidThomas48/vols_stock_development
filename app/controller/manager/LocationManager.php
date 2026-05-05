@@ -32,6 +32,15 @@ class LocationManager extends \fw\controller\manager\StdManager
         return $this->itemlocationtable->upsert($stock_id, $location_id, (int)$qty_str, $errormessage);
     }
 
+    public function setlocationstock($stock_id, $location_id, $target_str, $min_str, &$errormessage) {
+        $tqty = ($target_str !== '' && $target_str !== null) ? (int)$target_str : null;
+        $mqty = ($min_str    !== '' && $min_str    !== null) ? (int)$min_str    : null;
+        if ($tqty === null && $mqty === null) {
+            return $this->itemlocationtable->deletebystock($stock_id, $location_id, $errormessage);
+        }
+        return $this->itemlocationtable->upsertboth($stock_id, $location_id, $tqty, $mqty, $errormessage);
+    }
+
     public function update(&$errormessage="", $trace=false) {
         $success = parent::update($errormessage, $trace);
         if (!$success) return false;
@@ -43,9 +52,10 @@ class LocationManager extends \fw\controller\manager\StdManager
         foreach (array_filter(explode(',', $stock_ids_str)) as $raw) {
             $stock_id = (int)$raw;
             if (!$stock_id) continue;
-            $qty  = $this->requestdata["sil_{$stock_id}"] ?? '';
-            $errm = '';
-            $this->settargetqty($stock_id, $location_id, $qty, $errm);
+            $target  = $this->requestdata["sil_{$stock_id}"]     ?? '';
+            $min     = $this->requestdata["min_qty_{$stock_id}"] ?? '';
+            $errm    = '';
+            $this->setlocationstock($stock_id, $location_id, $target, $min, $errm);
             if ($errm) $errormessage .= ($errormessage ? '; ' : '') . $errm;
         }
         return true;

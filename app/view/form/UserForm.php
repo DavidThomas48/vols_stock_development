@@ -78,12 +78,17 @@ class UserForm extends \fw\view\form\StdCRUDForm {
         $formfields .= $this->component->buildinputrow("mobile",5,$this->fields["mobile"],'Mobile/Phone','mobile',20,16); 
         if (!$this->singlerecord) {
             $formfields .= $this->component->buildinputrow("username",6,$this->fields["username"],'Username','username',20,64,false,0,"It is strongly advised not to change this once it is in use.");
-            $formfields .= $this->component->buildinputrow("menu_number",7,$this->fields["menu_number"],'Menu Number','Menu number',3,3,false,0,"Use '0' for standard users. '1' is used for session attendance logging volunteers."); 
+            $formfields .= $this->component->buildinputrow("menu_number",7,$this->fields["menu_number"],'Menu Number','Menu number',3,3,false,0,"Use '0' for standard users. '1' is used for session attendance logging volunteers.");
+            $this->component->setwidths(40, 10, 50);
+            $formfields .= $this->component->rendersectionheading("Notifications");
+            $formfields .= '<input type="hidden" name="receives_stock_alerts" value="0">';
+            $formfields .= $this->component->buildcheckboxrow("receives_stock_alerts","1","",false,7,"Receives stock alerts","Receives email alerts when stock falls below minimum levels.",false,false,false,false);
         }
         $hiddencheckboxes = '';
+        $this->component->setwidths(40, 55, 5);
         if (!$this->singlerecord) {
             if ($this->isadmin || in_array($this->pagenum."||ROLES",$rights)) {
-                $fn = 7;
+                $fn = 8;
 // =============================================================================================
                 $buttons = ["rightid"=>"showrowsbtn","righttext"=>'Show <span style="text-decoration: underline;">L</span>INKED',"rightscript"=>"","rightdata"=>" data-state='all'","leftid"=>"","lefttext"=>"","leftscript"=>""];
                 $heading = "<span id='statustextspan'>ALL</span> Roles";

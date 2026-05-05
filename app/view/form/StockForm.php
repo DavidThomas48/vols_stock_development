@@ -52,7 +52,6 @@ class StockForm extends \fw\view\form\StdCRUDForm {
         $alllocations = $this->parents['locations'] ?? [];
         if (!empty($alllocations)) {
             $formfields .= $this->component->rendersectionheading("Target stock levels by location");
-            // $this->component->setwidths(40, 20, 40);
             $fn = 4;
             foreach ($alllocations as $loc) {
                 $formfields .= $this->component->buildinputrow(
@@ -61,6 +60,19 @@ class StockForm extends \fw\view\form\StdCRUDForm {
                     "",
                     $loc['name'],
                     "Leave blank for no target",
+                    6, 9,
+                    false, '', '',
+                    false, false, '', 1, '', 'number'
+                );
+            }
+            $formfields .= $this->component->rendersectionheading("Minimum Qty by Location");
+            foreach ($alllocations as $loc) {
+                $formfields .= $this->component->buildinputrow(
+                    "min_qty_" . $loc['id'],
+                    $fn++,
+                    "",
+                    $loc['name'],
+                    "Leave blank for no minimum",
                     6, 9,
                     false, '', '',
                     false, false, '', 1, '', 'number'
