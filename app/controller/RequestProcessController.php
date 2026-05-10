@@ -71,7 +71,7 @@ class RequestProcessController {
                                             } else {
                                                 $this->session->putpagenum(101); // back to login page
                                             }
-                                            $errormessage = "We encountered an error.";
+                                            if ($errormessage === "") { $errormessage = "We encountered an error."; }
                                             $success = true;
                                         }
                                         break; 

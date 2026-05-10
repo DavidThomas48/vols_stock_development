@@ -12,6 +12,7 @@
         $loader->addNamespace('fw',sprintf('%svendor%sfw',ROOT_DIR,DS));
         $loader->addNamespace('apptable',sprintf('%sapp%sdatabase%stable',ROOT_DIR,DS,DS));
         $loader->addNamespace('shared',sprintf('%sapp%sshared', ROOT_DIR,DS));
+        $loader->addNamespace('database',sprintf('%sapp%sdatabase', ROOT_DIR,DS,DS));
         $loader->addNamespace('database',sprintf('%svendor%sfw%sdatabase', ROOT_DIR,DS,DS));
         $loader->addNamespace('lib',sprintf('%svendor%sfw%slibrary',ROOT_DIR,DS,DS));
         $loader->addNamespace('PHPMailer',sprintf('%svendor%sPHPMailer%ssrc',ROOT_DIR,DS,DS));

@@ -79,12 +79,18 @@ class ClientManager extends \fw\controller\manager\StdManager
                     $this->clientmembertable->setfield("country_of_birth",$copy["child_mem_cob".$id]);
                     $success = $this->clientmembertable->insert(true,$id,false,$errormessage);
                 } else { // update record
-                    $set  = "`name` = '" . $this->table->real_escape_string($copy["child_mem_nam".$id]??"") . "'";
-                    $set .= array_key_exists("child_mem_rel".$id,$copy) ? (", `relationship`    = '".$this->table->real_escape_string($copy["child_mem_rel".$id]??"")."'"):"";
-                    $set .= array_key_exists("child_mem_mob".$id,$copy)? (", `month_of_birth`  = '".$this->table->real_escape_string($copy["child_mem_mob".$id]??0)."'"):"";
-                    $set .= array_key_exists("child_mem_yob".$id,$copy)? (", `year_of_birth`   = '".$this->table->real_escape_string($copy["child_mem_yob".$id]??0)."'"):"";
-                    $set .= array_key_exists("child_mem_cob".$id,$copy)? (",  `country_of_birth`= '".$this->table->real_escape_string($copy["child_mem_cob".$id]??"")."'"):"";
-                    $success = $this->clientmembertable->update($set, "`id`= ".$id, $numrows,$errormessage,false,$matchedrows,false);
+                    $set_parts = ["`name` = ?"];
+                    $params    = [$copy["child_mem_nam".$id] ?? ""];
+                    if (array_key_exists("child_mem_rel".$id, $copy)) { $set_parts[] = "`relationship` = ?";     $params[] = $copy["child_mem_rel".$id] ?? ""; }
+                    if (array_key_exists("child_mem_mob".$id, $copy)) { $set_parts[] = "`month_of_birth` = ?";   $params[] = $copy["child_mem_mob".$id] ?? 0; }
+                    if (array_key_exists("child_mem_yob".$id, $copy)) { $set_parts[] = "`year_of_birth` = ?";    $params[] = $copy["child_mem_yob".$id] ?? 0; }
+                    if (array_key_exists("child_mem_cob".$id, $copy)) { $set_parts[] = "`country_of_birth` = ?"; $params[] = $copy["child_mem_cob".$id] ?? ""; }
+                    $params[] = (int)$id;
+                    $result = null; $numrows = 0;
+                    $success = $this->clientmembertable->execute_params(
+                        "UPDATE client_member SET " . implode(', ', $set_parts) . " WHERE id = ?",
+                        $params, $result, $numrows, $errormessage, 1
+                    );
                 }
             }
         }
