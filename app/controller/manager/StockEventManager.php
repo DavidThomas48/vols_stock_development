@@ -294,8 +294,8 @@ class StockEventManager extends \fw\controller\manager\StdManager
             return true;
         }
 
-        // Create a new closed issue event dated 1 minute before the stocktake.
-        $issue_date   = date('Y-m-d H:i:s', strtotime($event['date_created']) - 60);
+        // Create a new closed issue event dated 5 minutes before the stocktake.
+        $issue_date   = date('Y-m-d H:i:s', strtotime($event['date_created']) - 300);
         $new_event_id = 0;
         $this->table->clear();
         $this->table->setfield("event",        "issue");
