@@ -15,6 +15,7 @@ abstract class DataBase
     abstract function select($tablename, $fields, $where_clause, $groupby,$having,$orderby,$locktype, &$results, &$numrows);
     abstract function get_insert_id();
     abstract function real_escape_string($string);
+    abstract function execute_params(string $sql, array $params, &$result, &$numrows, &$errormessage, int $querytype=0, $trace=false): bool;
    // abstract function getcolumnnames($table_name,&$columns);
     public function __destruct()
     {

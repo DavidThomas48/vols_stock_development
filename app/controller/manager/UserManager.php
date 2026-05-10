@@ -364,10 +364,9 @@ class UserManager extends \fw\controller\manager\StdManager
         return $success;
      }
     public    function getreceivesstockalerts($user_id) {
-        $uid     = $this->table->real_escape_string($user_id);
         $results = [];
         $numrows = 0;
-        $this->table->query("SELECT receives_stock_alerts FROM user WHERE id = '{$uid}'", $results, $numrows, false);
+        $this->table->query_params("SELECT receives_stock_alerts FROM user WHERE id = ?", [(int)$user_id], $results, $numrows);
         return ($numrows > 0 && !empty($results[0]['receives_stock_alerts'])) ? 1 : 0;
      }
     public    function initemails($emailmanager=null,$trace=false){
@@ -505,10 +504,12 @@ class UserManager extends \fw\controller\manager\StdManager
                         if ($pwOK) {  // don't trust the javascript checks
                             $userid = $isadminchange? $this->requestdata["active_user"] : $records[0]["user_id"];
                             $password = password_hash($password, PASSWORD_DEFAULT, ['cost' => 13]);
-                            $set = "`password` = '{$password}'";
-                            $where = "`id` = '{$userid}'";
+                            $result = null; $numrows = 0;
                             $this->table->setuser($userid);
-                            $success = $this->table->update($set,$where,$numrows,$errormessage,false,$mr);
+                            $success = $this->table->execute_params(
+                                "UPDATE user SET `password` = ? WHERE `id` = ?",
+                                [$password, (int)$userid], $result, $numrows, $errormessage, 1
+                            );
                             if ($success) {
                                 // echo __METHOD__." ".$this->session->getuserid()."<br>";
                                 $errormessage = $isadminchange?"":"Success! Your password has been updated.";

@@ -94,10 +94,11 @@ class StockSupplierManager extends \fw\controller\manager\StdManager
 
     protected function deletelink($parent_id, $linked_id, $trace=false) {
         if ($this->trace || $trace) { echo "Enter ".__METHOD__." supplier={$parent_id} category={$linked_id}<br>"; }
-        $parent_id = $this->linktable->real_escape_string($parent_id);
-        $linked_id = $this->linktable->real_escape_string($linked_id);
-        $where     = "stock_supplier_id = '{$parent_id}' AND stock_category_id = '{$linked_id}'";
-        $success   = $this->linktable->delete($where, $numrows, $trace);
+        $result = null; $numrows = 0; $errormessage = '';
+        $success = $this->linktable->execute_params(
+            "DELETE FROM stock_supplier_cat_link WHERE stock_supplier_id = ? AND stock_category_id = ?",
+            [(int)$parent_id, (int)$linked_id], $result, $numrows, $errormessage, 1
+        );
         if ($this->trace || $trace) { echo "Leave ".__METHOD__." OK={$success}<br>"; }
         return $success;
     }

@@ -85,15 +85,16 @@ class StockManager extends \fw\controller\manager\StdManager
         foreach ($loc_vals as $loc_id => $vals) {
             $tqty = $vals['tqty'] ?? '';
             $mqty = $vals['mqty'] ?? '';
-            $sid  = $this->stockitemlocationtable->real_escape_string($stock_id);
-            $lid  = $this->stockitemlocationtable->real_escape_string($loc_id);
             if ($tqty === '' && $mqty === '') {
-                $numrows = 0;
-                $this->stockitemlocationtable->delete("stock_id='{$sid}' AND stock_location_id='{$lid}'", $numrows);
+                $result = null; $numrows = 0; $em = '';
+                $this->stockitemlocationtable->execute_params(
+                    "DELETE FROM stock_item_location WHERE stock_id = ? AND stock_location_id = ?",
+                    [(int)$stock_id, (int)$loc_id], $result, $numrows, $em, 1
+                );
             } else {
                 $tval = ($tqty !== '') ? (int)$tqty : null;
                 $mval = ($mqty !== '') ? (int)$mqty : null;
-                if (!$this->stockitemlocationtable->upsertboth($sid, $lid, $tval, $mval, $errormessage)) {
+                if (!$this->stockitemlocationtable->upsertboth($stock_id, $loc_id, $tval, $mval, $errormessage)) {
                     return false;
                 }
             }
