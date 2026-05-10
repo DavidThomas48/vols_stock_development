@@ -118,12 +118,12 @@ class StockEventManager extends \fw\controller\manager\StdManager
         }
 
         if ($movement_id > 0) {
-            $val_safe = $this->movementtable->real_escape_string($value);
-            $id_safe  = $this->movementtable->real_escape_string($movement_id);
-            $set   = ($event_type === 'stocktake') ? "`stock_qoh` = '{$val_safe}'" : "`qty` = '{$val_safe}'";
-            $where = "id = '{$id_safe}'";
-            $numrows = 0;
-            $success = $this->movementtable->update($set, $where, $numrows, $errormessage);
+            $field   = ($event_type === 'stocktake') ? 'stock_qoh' : 'qty';
+            $result  = null; $numrows = 0;
+            $success = $this->movementtable->execute_params(
+                "UPDATE stock_movement SET `{$field}` = ? WHERE id = ?",
+                [$value, $movement_id], $result, $numrows, $errormessage, 1
+            );
         } else {
             $this->movementtable->clear();
             $this->movementtable->setfield("stock_id",       $stock_id);
@@ -161,13 +161,12 @@ class StockEventManager extends \fw\controller\manager\StdManager
     // =========================================================================
 
     public function saveweight($event_id, $weight, &$errormessage) {
-        $id_safe     = $this->table->real_escape_string($event_id);
-        $weight_safe = $this->table->real_escape_string($weight);
-        $weight_val  = ($weight !== '' && $weight !== null) ? "'{$weight_safe}'" : "NULL";
-        $set         = "`total_weight` = {$weight_val}";
-        $where       = "id = '{$id_safe}'";
-        $numrows     = 0;
-        return $this->table->update($set, $where, $numrows, $errormessage);
+        $weight_val = ($weight !== '' && $weight !== null) ? $weight : null;
+        $result = null; $numrows = 0;
+        return $this->table->execute_params(
+            "UPDATE stock_event SET `total_weight` = ? WHERE id = ?",
+            [$weight_val, (int)$event_id], $result, $numrows, $errormessage, 1
+        );
     }
 
     // =========================================================================
@@ -198,12 +197,12 @@ class StockEventManager extends \fw\controller\manager\StdManager
         }
 
         if ($success) {
-            $now      = date('Y-m-d H:i:s');
-            $id_safe  = $this->table->real_escape_string($event_id);
-            $set      = "`status` = 'closed', `date_closed` = '{$now}'";
-            $where    = "id = '{$id_safe}'";
-            $numrows  = 0;
-            $success  = $this->table->update($set, $where, $numrows, $errormessage);
+            $now     = date('Y-m-d H:i:s');
+            $result  = null; $numrows = 0;
+            $success = $this->table->execute_params(
+                "UPDATE stock_event SET `status` = 'closed', `date_closed` = ? WHERE id = ?",
+                [$now, (int)$event_id], $result, $numrows, $errormessage, 1
+            );
         }
 
         // For stocktakes at uncontrolled-issues locations: generate variance issue and cancel.
@@ -229,13 +228,12 @@ class StockEventManager extends \fw\controller\manager\StdManager
         foreach ($movements as $movement) {
             $current_qoh = 0;
             $this->calculateqoh($movement['stock_id'], $movement['location_id'], $current_qoh);
-            $qty      = (int)$movement['stock_qoh'] - $current_qoh;
-            $qty_safe = $this->movementtable->real_escape_string($qty);
-            $id_safe  = $this->movementtable->real_escape_string($movement['id']);
-            $set      = "`qty` = '{$qty_safe}'";
-            $where    = "id = '{$id_safe}'";
-            $numrows  = 0;
-            $success  = $success && $this->movementtable->update($set, $where, $numrows, $errormessage);
+            $qty     = (int)$movement['stock_qoh'] - $current_qoh;
+            $result  = null; $numrows = 0;
+            $success = $success && $this->movementtable->execute_params(
+                "UPDATE stock_movement SET `qty` = ? WHERE id = ?",
+                [$qty, (int)$movement['id']], $result, $numrows, $errormessage, 1
+            );
         }
         if ($this->trace) { echo "Leave ".__METHOD__." OK={$success}<br>"; }
         return $success;
@@ -369,14 +367,11 @@ class StockEventManager extends \fw\controller\manager\StdManager
         }
 
         // Block if a stocktake was closed after this event was created
-        $date_safe   = $this->table->real_escape_string($event['date_created']);
-        $id_safe     = $this->table->real_escape_string($event_id);
-        $st_results  = [];
-        $st_numrows  = 0;
-        $this->table->select(
-            "id",
-            "event = 'stocktake' AND status = 'closed' AND date_closed > '{$date_safe}'",
-            "", "", "", 0, $st_results, $st_numrows
+        $st_results = [];
+        $st_numrows = 0;
+        $this->table->query_params(
+            "SELECT id FROM stock_event WHERE event = 'stocktake' AND status = 'closed' AND date_closed > ?",
+            [$event['date_created']], $st_results, $st_numrows
         );
         if ($st_numrows > 0) {
             $errormessage = "This event cannot be cancelled: a stocktake was completed after it was created.";
@@ -384,15 +379,19 @@ class StockEventManager extends \fw\controller\manager\StdManager
         }
 
         // Delete all movements linked to this event
-        $where   = "stock_event_id = '{$id_safe}'";
-        $success = $this->movementtable->delete($where, $numrows, false, $errormessage);
+        $result  = null;
+        $success = $this->movementtable->execute_params(
+            "DELETE FROM stock_movement WHERE stock_event_id = ?",
+            [(int)$event_id], $result, $numrows, $errormessage, 1
+        );
 
         if ($success) {
             $now     = date('Y-m-d H:i:s');
-            $set     = "`status` = 'cancelled', `date_cancelled` = '{$now}'";
-            $where   = "id = '{$id_safe}'";
-            $numrows = 0;
-            $success = $this->table->update($set, $where, $numrows, $errormessage);
+            $result  = null; $numrows = 0;
+            $success = $this->table->execute_params(
+                "UPDATE stock_event SET `status` = 'cancelled', `date_cancelled` = ? WHERE id = ?",
+                [$now, (int)$event_id], $result, $numrows, $errormessage, 1
+            );
         }
 
         if ($this->trace) { echo "Leave ".__METHOD__." OK={$success}<br>"; }

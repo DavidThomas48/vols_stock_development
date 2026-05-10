@@ -19,15 +19,16 @@ class StockTable extends \fw\database\table\MySQLTable
     // Returns variance data for a single closed stocktake event.
     // variance = stocktake_qty - (stock level as at event.date_created - 1 minute).
     // Reusable: can be called from any manager that needs variance figures.
+    // $event_id is an integer ID — cast and embedded directly across both queries.
     public function getstocktakevariance($event_id, &$results, &$numrows, $trace=false) {
         if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
-        $eid = $this->real_escape_string($event_id);
+        $eid = (int)$event_id;
 
         $ev_rows = []; $ev_n = 0;
         $this->query(
             "SELECT se.date_created, se.location1_id"
             . " FROM stock_event se"
-            . " WHERE se.id = '{$eid}' AND se.event = 'stocktake' AND se.status = 'closed'",
+            . " WHERE se.id = {$eid} AND se.event = 'stocktake' AND se.status = 'closed'",
             $ev_rows, $ev_n, $trace
         );
         if ($ev_n === 0) {
@@ -53,7 +54,7 @@ class StockTable extends \fw\database\table\MySQLTable
             . " FROM stock_movement sm"
             . " JOIN stock s ON sm.stock_id = s.id"
             . " LEFT JOIN stock_category sc ON s.category_id = sc.id"
-            . " WHERE sm.stock_event_id = '{$eid}'"
+            . " WHERE sm.stock_event_id = {$eid}"
             . " ORDER BY sc.Name, s.Name",
             $st_rows, $st_n, $trace
         );
@@ -85,6 +86,7 @@ class StockTable extends \fw\database\table\MySQLTable
     // $as_at: MySQL datetime 'YYYY-MM-DD HH:MM:SS'. When set, any event with
     // date_created after this time is ignored and the stocktake search works
     // backwards from this time rather than from now.
+    // $location_id is an integer ID — cast and embedded directly across correlated subqueries.
     public function getstockwithlevels(&$results, &$numrows, $location_id='', $as_at='', $trace=false) {
         if ($this->trace || $trace) { echo 'Enter '.__METHOD__.'<br>'; }
 
@@ -155,14 +157,14 @@ class StockTable extends \fw\database\table\MySQLTable
 
         // Per-location: use the most recent closed stocktake at this location as the
         // baseline, then add movements of each type that occurred after it.
-        $lid    = $this->real_escape_string($location_id);
-        $loc_x  = " AND sm_x.location_id = '{$lid}'";
-        $loc_st = " AND sm_st.location_id = '{$lid}'";
-        $loc_mv = " AND {alias}.location_id = '{$lid}'";
+        $lid    = (int)$location_id;
+        $loc_x  = " AND sm_x.location_id = {$lid}";
+        $loc_st = " AND sm_st.location_id = {$lid}";
+        $loc_mv = " AND {alias}.location_id = {$lid}";
 
         // When an as_at cutoff is supplied, ignore any event created after that time.
-        $as_at_safe    = !empty($as_at) ? $this->real_escape_string($as_at) : '';
-        $as_at_st_cond = $as_at_safe  ? " AND se_x.date_created <= '{$as_at_safe}'" : '';
+        // $as_at comes from date() and is safe to embed directly.
+        $as_at_st_cond = $as_at ? " AND se_x.date_created <= '{$as_at}'" : '';
 
         // Correlated subquery: id of the most recent closed stocktake for this stock item at this location
         // (at or before as_at when supplied).
@@ -205,7 +207,7 @@ class StockTable extends \fw\database\table\MySQLTable
             . str_replace('{alias}', $alias, $loc_mv)
             . "   AND se_{$alias}.event = '{$event_type}'"
             . "   AND se_{$alias}.status = 'closed'"
-            . ($as_at_safe ? "   AND se_{$alias}.date_created <= '{$as_at_safe}'" : "")
+            . ($as_at ? "   AND se_{$alias}.date_created <= '{$as_at}'" : "")
             . "   AND ({$last_st_id} IS NULL"
             . "        OR se_{$alias}.date_created > {$last_st_date}))"
             . ", 0)";

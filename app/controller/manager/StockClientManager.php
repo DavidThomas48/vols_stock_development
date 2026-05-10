@@ -21,10 +21,13 @@ class StockClientManager extends \fw\controller\manager\StdManager
     }
 
     public function delete(&$errormessage="", $trace=false) {
-        $id      = $this->table->real_escape_string($this->requestdata['id']);
+        $id      = (int)($this->requestdata['id']);
         $results = [];
         $numrows = 0;
-        $this->stockeventtable->select("id", "stock_client_id='$id'", "", "", "", 0, $results, $numrows);
+        $this->stockeventtable->query_params(
+            "SELECT id FROM stock_event WHERE stock_client_id = ?",
+            [$id], $results, $numrows
+        );
         if ($numrows > 0) {
             $errormessage = "Cannot delete this client — it is used by $numrows stock event(s). Remove those events first.";
             return false;

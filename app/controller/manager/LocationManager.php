@@ -62,10 +62,13 @@ class LocationManager extends \fw\controller\manager\StdManager
     }
 
     public function delete(&$errormessage="", $trace=false) {
-        $id      = $this->table->real_escape_string($this->requestdata['id']);
+        $id      = (int)($this->requestdata['id']);
         $results = [];
         $numrows = 0;
-        $this->stockeventtable->select("id", "location1_id='$id' OR location2_id='$id'", "", "", "", 0, $results, $numrows);
+        $this->stockeventtable->query_params(
+            "SELECT id FROM stock_event WHERE location1_id = ? OR location2_id = ?",
+            [$id, $id], $results, $numrows
+        );
         if ($numrows > 0) {
             $errormessage = "Cannot delete this location — it is used by $numrows stock event(s). Remove those events first.";
             return false;
