@@ -18,7 +18,8 @@ class HTMLHead extends \fw\view\head\HTMLHead
         $this->session = $session;
         $this->targetpage = $targetpage;
         $this->config = $session->getconfig();
-        $this->ajaxurl = $this->config["app"]["SITEURL"] ?? '';
+        $siteurl = $this->config["app"]["SITEURL"] ?? '';
+        $this->ajaxurl = parse_url($siteurl, PHP_URL_PATH) ?? $siteurl;
      }
     public function __destruct() {
         if ($this->trace) { echo "Enter ".__METHOD__."<br>"; }

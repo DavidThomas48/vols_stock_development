@@ -989,9 +989,8 @@ class ViewController {
             $n     = $count === 1;
             $mm    = $this->menumanager;
             $url   = '?p=' . $mm::STOCKLEVELREPORTPAGE . '&report_type=belowminimumreport';
-            $html  = '<div id="stockalertdialog" style="display:none;" title="Low Stock Alert">';
-            $html .= '<p>' . $count . ' stock ' . ($n ? 'item is' : 'items are') . ' currently below minimum quantity.</p>';
-            $html .= '<p style="text-align:center"><button type="button" onclick="window.location=\'' . $url . '\'">View the Low Stock report &rarr;</button></p>';
+            $html  = '<div id="stockalertdialog" style="display:none;padding:16px 12px;" title="Low Stock Alert">';
+            $html .= '<p style="margin:8px 0 16px;">' . $count . ' stock ' . ($n ? 'item is' : 'items are') . ' currently below minimum quantity.</p>';
             $html .= '</div>';
             $html .= '<script>jQuery(function($){'
                   .  '$("#stockalertdialog").dialog({modal:true,autoOpen:true,width:420,'
