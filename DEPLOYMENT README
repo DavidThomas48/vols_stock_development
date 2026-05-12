@@ -1,0 +1,17 @@
+Local Work: Write code, run tests, and commit locally.
+
+Push to Remote: Push your changes to GitHub (git push origin master).
+
+cPanel Pull: Go to cPanel Git Version Control -> Manage -> Pull or Deploy and click Update from Remote.
+
+Deploy: Click Deploy HEAD Commit
+
+
+
+
+Since your environment is now fully configured and stable, here are a few final maintenance tips to keep in mind:
+
+>  Modifying .cpanel.yml: If you ever need to add more folders to your exclusion list alongside vendor/mailjet/, remember to always edit the file on your local machine, commit it, and push it to GitHub first. Modifying it directly on the server via File Manager will cause cPanel to flag "uncommitted changes" [I0] and lock the deploy button again. The Golden Rule: Always pull before you deploy. 
+
+>  The Deploy HEAD Commit button only rolls out the files that cPanel has already fetched down into your /home/sarum964/repositories/vols_stock_development directory.
+
